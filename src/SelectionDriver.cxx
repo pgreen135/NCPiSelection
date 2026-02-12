@@ -12,7 +12,6 @@
 #include "../include/CreateTrainingTree.h"
 #include "../include/Selection.h"
 #include "../include/StackedHistTool.h"
-#include "../include/BDTTool.h"
 
 
 // Constructor
@@ -59,7 +58,6 @@ void SelectionDriver::runBDTSelectionFull() {
 	// construct classes
 	Selection _selection(_utility);
 	CreateTrainingTree _trainingTree(Utility::kMuonPion);
-	BDTTool _BDTTool(false, false, true, false, _utility);
 
 	// construct stacks
 	StackedHistTool _histStack_contained_fraction("", "", 3, -1.05, 2.10, _utility);

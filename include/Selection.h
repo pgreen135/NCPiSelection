@@ -5,7 +5,6 @@
 
 #include "../include/Utility.h"
 #include "../include/EventContainer.h"
-#include "../include/BDTTool.h"
 
 class Selection {
 
@@ -18,10 +17,8 @@ public:
 	~Selection(){};
 
 	// Run Selection
-	bool ApplyWCSelection(EventContainer &_evt, const BDTTool &_bdt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
+	bool ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 	bool ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
-	bool ApplyCutBasedSelection(EventContainer &_evt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
-	bool ApplyBDTBasedSelection(EventContainer &_evt, const BDTTool &_bdt, Utility::FileTypeEnums type, Utility::RunPeriodEnums runPeriod);
 
 	// Selection Cuts
 	// Pre-selection
@@ -37,19 +34,16 @@ public:
 	bool ApplyCosmicRejection(const EventContainer &_evt, Utility::RunPeriodEnums runPeriod);
 	bool ApplyNeutralPionRejection(const EventContainer &_evt);
 	bool ApplyLooseNeutralPionRejection(const EventContainer &_evt);
-	bool ApplyNeutralPionRejectionBDT(EventContainer &_evt, const BDTTool &_bdt, Utility::RunPeriodEnums runPeriod);
 	bool ApplyProtonRejection(EventContainer &_evt);
 	bool ApplyLooseProtonRejection(EventContainer &_evt);
-	bool ApplyProtonRejectionBDT(EventContainer &_evt, const BDTTool &_bdt, Utility::RunPeriodEnums runPeriod);
-
+	
 	// Count Protons
-	int CountProtons(EventContainer &_evt, const BDTTool &_bdt, Utility::RunPeriodEnums runPeriod);
+	int CountProtons(EventContainer &_evt, Utility::RunPeriodEnums runPeriod);
 
 	// Selected Pion Information
 	void setSelectedPionInformation(EventContainer &_evt);
 	
 	// ----------------------------------
-
 
 protected:
 
