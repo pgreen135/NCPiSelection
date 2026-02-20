@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <memory>
 
 #include "TChain.h"
 #include "TFile.h"
@@ -43,7 +44,23 @@ int main(int argc, char *argv[]) {
 	std::cout << "Processing file: " << input_filename << ", type enum: " << type << ", run period enum: " << runPeriod << std::endl;
   
 	// Get the TTrees containing the event ntuples and subrun POT information
-	TFile *inputFile = new TFile(input_filename.c_str()); 
+	TChain *pelee_tree = new TChain("nuselection/NeutrinoSelectionFilter");
+	TChain *subrunsTree = new TChain("nuselection/SubRun");
+	TChain *wc_BDTvars_tree = new TChain("wcpselection/T_BDTvars");
+	TChain *wc_eval_tree = new TChain("wcpselection/T_eval");
+	TChain *wc_PFeval_tree = new TChain("wcpselection/T_PFeval");
+	TChain *wc_POT_tree = new TChain("wcpselection/T_pot");
+	TChain *lantern_tree = new TChain("lantern/EventTree");
+    
+	pelee_tree->Add(input_filename.c_str());
+	subrunsTree->Add(input_filename.c_str());
+	wc_BDTvars_tree->Add(input_filename.c_str());
+	wc_eval_tree->Add(input_filename.c_str());
+	wc_PFeval_tree->Add(input_filename.c_str());
+	wc_POT_tree->Add(input_filename.c_str());
+	lantern_tree->Add(input_filename.c_str());
+
+	/*
 	TTree *pelee_tree = (TTree*)inputFile->Get("nuselection/NeutrinoSelectionFilter");
 	TTree *subrunsTree = (TTree*)inputFile->Get("nuselection/SubRun");
 
@@ -52,6 +69,7 @@ int main(int argc, char *argv[]) {
 	TTree *wc_PFeval_tree = (TTree*)inputFile->Get("wcpselection/T_PFeval");
 	TTree *wc_POT_tree = (TTree*)inputFile->Get("wcpselection/T_pot");
 	TTree *lantern_tree = (TTree*)inputFile->Get("lantern/EventTree");
+	*/
 
 	// initialise classes
 	Utility _utility(false, false, false, false);
@@ -94,6 +112,8 @@ int main(int argc, char *argv[]) {
 	//for (int e = 180500; e < 180600; e++) {
 
 		pelee_tree->GetEntry(e);
+
+		std::cout << "Processing event " << _event.run << ":" << _event.sub << ":" << _event.evt << std::endl;
 
 		// skip issue MC events
 		if (type == Utility::kMC) {

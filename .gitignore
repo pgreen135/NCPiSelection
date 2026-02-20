@@ -6,3 +6,4 @@
 *.pid
 build
 .DS_Store
+.vscode
