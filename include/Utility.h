@@ -60,6 +60,7 @@ public:
 		kNC1pi,
 		kNCOther,
 		kCCNumu0pi,
+		kCCNumu1pi,
 		kCCNumuNpi,
 		kCCNumuOther,
 		kCCNue,
@@ -216,6 +217,7 @@ public:
 	double getReweightRatioNuebar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
 	double getReweightRatioNumu(float energy, float angle, Utility::RunPeriodEnums runPeriod);
 	double getReweightRatioNumubar(float energy, float angle, Utility::RunPeriodEnums runPeriod);
+
 
 private:
 

@@ -8,7 +8,7 @@
 #include "TRotation.h"
 
 // Constructor
-EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc_BDTvars_tree, TTree *wc_PFeval_tree, TTree *lantern_tree, const Utility &utility): _utility{ utility } {
+EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc_BDTvars_tree, TTree *wc_PFeval_tree, TTree *wc_spacepoints_tree, TTree *lantern_tree, const Utility &utility): _utility{ utility } {
 	
 	std::cout << "Initialising Event Container Class" << std::endl;
 
@@ -56,6 +56,13 @@ EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc
 
 	wc_PFeval_tree->SetBranchAddress("truth_process", &wc_truth_process);
 	wc_PFeval_tree->SetBranchAddress("truth_endprocess", &wc_truth_endprocess);
+
+	// spacepoints tree addresses
+	wc_spacepoints_tree->SetBranchAddress("Trecchargeblob_spacepoints_x", &wc_Trecchargeblob_spacepoints_x);
+	wc_spacepoints_tree->SetBranchAddress("Trecchargeblob_spacepoints_y", &wc_Trecchargeblob_spacepoints_y);
+	wc_spacepoints_tree->SetBranchAddress("Trecchargeblob_spacepoints_z", &wc_Trecchargeblob_spacepoints_z);
+	wc_spacepoints_tree->SetBranchAddress("Trecchargeblob_spacepoints_real_cluster_id", &wc_Trecchargeblob_spacepoints_real_cluster_id);
+	wc_spacepoints_tree->SetBranchAddress("Trecchargeblob_spacepoints_q", &wc_Trecchargeblob_spacepoints_q);
 
 	// set lantern_tree addresses
 	lantern_tree->SetBranchAddress("run", &lantern_run);
@@ -392,8 +399,40 @@ EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc
 	pelee_tree->SetBranchAddress("blip_z", &blip_z_v);
 	pelee_tree->SetBranchAddress("blip_proxtrkdist", &blip_proxtrkdist_v);
 	pelee_tree->SetBranchAddress("blip_touchtrk", &blip_touchtrk_v);
-	
 
+	// Load FSI weight histograms
+	TFile *FSI_NC_piminus = new TFile("../fsiweights/fsi_weights_nc_piminus.root");
+    TFile *FSI_NC_piplus = new TFile("../fsiweights/fsi_weights_nc_piplus.root");
+	TFile *FSI_CC_piminus = new TFile("../fsiweights/fsi_weights_cc_piminus.root");
+    TFile *FSI_CC_piplus = new TFile("../fsiweights/fsi_weights_cc_piplus.root");
+   
+    if (FSI_NC_piminus->IsZombie() || FSI_NC_piplus->IsZombie() || FSI_CC_piminus->IsZombie() || FSI_CC_piplus->IsZombie()) {
+      std::cout << "Error opening ratio files\n";
+      exit(111);
+    }
+
+    h_fsi_nc_piminus  = (TH2D*)FSI_NC_piminus->Get("h_ratio");
+    h_fsi_nc_piplus = (TH2D*)FSI_NC_piplus->Get("h_ratio");
+    h_fsi_cc_piminus  = (TH2D*)FSI_CC_piminus->Get("h_ratio");
+    h_fsi_cc_piplus = (TH2D*)FSI_CC_piplus->Get("h_ratio");
+
+    if (!h_fsi_nc_piminus || !h_fsi_nc_piplus || !h_fsi_cc_piminus || !h_fsi_cc_piplus) {
+      std::cout << "Error retrieving ratio histograms\n";
+      exit(222);
+    }
+
+    h_fsi_nc_piminus->SetDirectory(0);
+    h_fsi_nc_piplus->SetDirectory(0);
+    h_fsi_cc_piminus->SetDirectory(0);
+    h_fsi_cc_piplus->SetDirectory(0);
+
+    FSI_NC_piminus->Close();
+    FSI_NC_piplus->Close();
+    FSI_CC_piminus->Close();
+    FSI_CC_piplus->Close();
+
+	// Hypfit initialization
+	hypfit = new Hypfit();
 }
 
 // Destructor
@@ -448,13 +487,19 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 						if (mc_pdg_v->at(i) == 333) nphi++;   	
 					}
 
-					if (npion_threshold == 0 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
+					if (nmuon_threshold == 1 && npion_threshold == 0 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
 						// classify as CC numu 0pi
 						classification = Utility::kCCNumu0pi;
 						category_ = static_cast<int>(classification);
 						return;
 					}
-					else if (npion_threshold >= 1 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
+					else if (nmuon_threshold == 1 && npion_threshold == 1 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
+						// classify as CC numu 1pi
+						classification = Utility::kCCNumu1pi;
+						category_ = static_cast<int>(classification);
+						return;
+					}
+					else if (nmuon_threshold == 1 && npion_threshold >= 1 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
 						// classify as CC numu Npi
 						classification = Utility::kCCNumuNpi;
 						category_ = static_cast<int>(classification);
@@ -832,6 +877,10 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 		// set normalisation weight
 		normalisation_weight = 1;
 
+		// apply FSI reweighting for pions in signal events
+		double fsi_weight = GetFSIWeight();
+		weight *= fsi_weight;
+
 	}
 	
 	// dirt events
@@ -878,7 +927,7 @@ float EventContainer::checkWeight(float weight) {
 	}
 
 	// overly large weight
-	else if (weight > 30.0) {
+	else if (weight > 15.0) {
 		//std::cout << "Warning: overly large event weight, " << weight << std::endl;
 		weight = 1.0;
 	}
@@ -886,7 +935,7 @@ float EventContainer::checkWeight(float weight) {
 	// negative weight
 	else if (weight < 0.0) {
 		//std::cout << "Warning: negative event weight" << std::endl;
-		weight = 1.0;
+		weight = 0.0;
 	}
 
 	// approximately zero weight
@@ -1777,6 +1826,46 @@ float EventContainer::CalculatePionMomentumRange(float R) {
 	else return 0;
 }
 
+float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
+
+	//std::vector<double> test_rr = {2., 4., 6., 8., 10., 12., 14., 16., 18., 20., 22., 24., 26., 28., 30.};
+	//std::vector<double> test_dedx = {6., 5.8, 5.6, 5.4, 5.2, 5.0, 4.8, 4.6, 4.4, 4.2, 4.0, 3.8, 3.6, 3.4, 3.2};
+
+	// get candidate track ID
+	int recoID = wc_reco_id[wc_pion_candidate_index];
+
+	//std::cout << "Candidate track ID: " << recoID << std::endl;
+
+	// get spacepoints for candidate track
+	std::vector<float> spacepoints_x; spacepoints_x.reserve(1000);
+	std::vector<float> spacepoints_y; spacepoints_y.reserve(1000);
+	std::vector<float> spacepoints_z; spacepoints_z.reserve(1000);
+	std::vector<float> spacepoints_q; spacepoints_q.reserve(1000);
+
+	//std::cout << "Total number of spacepoints: " << wc_Trecchargeblob_spacepoints_real_cluster_id->size() << std::endl;
+
+	for (int i = 0; i < wc_Trecchargeblob_spacepoints_real_cluster_id->size(); i++) {
+		//std::cout << "Spacepoint " << i << ": cluster ID = " << wc_Trecchargeblob_spacepoints_real_cluster_id->at(i) << std::endl;
+		if (wc_Trecchargeblob_spacepoints_real_cluster_id->at(i) == recoID) {
+			spacepoints_x.push_back(wc_Trecchargeblob_spacepoints_x->at(i));
+			spacepoints_y.push_back(wc_Trecchargeblob_spacepoints_y->at(i));
+			spacepoints_z.push_back(wc_Trecchargeblob_spacepoints_z->at(i));
+			spacepoints_q.push_back(wc_Trecchargeblob_spacepoints_q->at(i));
+		}
+	}
+	
+	//std::cout << "Number of spacepoints for candidate track: " << spacepoints_x.size() << std::endl;
+
+
+
+	//double pion_likelihood_KE = hypfit->Likelihood(test_dedx, test_rr, 211);
+	//double pion_gaus_KE = hypfit->Gaussian(test_dedx, test_rr, 211);
+	//std::cout << "pion_likelihood_KE: " << pion_likelihood_KE << std::endl;
+	//std::cout << "pion_gaus_KE: " << pion_gaus_KE << std::endl;
+
+	return 0;
+}
+
 // shower track end proximity
 float EventContainer::GetShowerTrackEndProximity(unsigned int shrID) {
 
@@ -1982,4 +2071,75 @@ void EventContainer::PrintDaughters(int pionID, std::vector<int>& daughters) {
 			PrintDaughters(daughterID, daughters);
 		}
 	}
+}
+
+double EventContainer::GetFSIWeight() {
+
+	double fsi_weight = 1.0;
+
+	// only consider NC 1pi and CC 1pi events, for now
+	if (classification == Utility::kNC1pi || classification == Utility::kCCNumu1pi) {
+
+		// find pions and calculate KE / angle + flag whether pi+ or pi-
+		for (int i = 0; i < mc_pdg_v->size(); i++) {
+
+			// skip non-pions
+			if (!(mc_pdg_v->at(i) == 211 || mc_pdg_v->at(i) == -211)) continue;
+
+			// momentum
+			double pz = mc_pz_v->at(i);
+			double mc_momentum = std::sqrt( pow(mc_px_v->at(i),2) + 
+											pow(mc_py_v->at(i),2) + 
+											pow(mc_pz_v->at(i),2) );
+			
+			// skip below threshold pions
+			if (mc_momentum <= 0.1) continue;
+
+			// calculate KE and angle
+			double mass = 0.13957; // GeV
+			double mc_energy = std::sqrt( pow(mc_momentum, 2) + mass*mass );
+			double mc_ke = (mc_energy - mass) * 1000; // subtract pion mass, convert to MeV
+			double mc_cos_theta = pz / mc_momentum;
+
+			// get correct histogram 
+			TH2D* h;
+			if (classification == Utility::kNC1pi) {
+				if (mc_pdg_v->at(i) == 211) h = h_fsi_nc_piplus;
+				else if (mc_pdg_v->at(i) == -211) h = h_fsi_nc_piminus;
+			}
+			else if (classification == Utility::kCCNumu1pi) {
+				if (mc_pdg_v->at(i) == 211) h = h_fsi_cc_piplus;
+				else if (mc_pdg_v->at(i) == -211) h = h_fsi_cc_piminus;
+			}
+			else {
+				std::cout << "Warning: FSI weight calculation only implemented for NC 1pi and CC 1pi events, check this!" << std::endl;
+				return 1.0;
+			}
+			
+			// get weight
+			if (mc_ke <= 1000) {
+				int binx = h->GetXaxis()->FindBin(mc_ke);
+				binx = std::max(1, std::min(binx, h->GetXaxis()->GetNbins()));
+				int biny = h->GetYaxis()->FindBin(mc_cos_theta);
+				biny = std::max(1, std::min(biny, h->GetYaxis()->GetNbins()));
+
+				fsi_weight = h->GetBinContent(binx, biny);
+			}
+			else fsi_weight = 1.0; // above 1 GeV, no FSI reweighting available, so set to 1
+
+			if (fsi_weight == 0) {
+				std::cout << "Warning: FSI weight is zero, "; 
+				std::cout << "KE: " << mc_ke << " MeV, cos(theta): " << mc_cos_theta << std::endl;
+				fsi_weight = 1.0; // reset to 1 to avoid zeroing out events
+			}
+
+			break; // only consider first pion in event
+		}
+
+		//std::cout << "FSI weight: " << fsi_weight << std::endl;
+
+		fsi_weight = checkWeight(fsi_weight);
+	}
+
+	return fsi_weight;
 }

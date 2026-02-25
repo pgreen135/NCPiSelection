@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
 	TChain *wc_eval_tree = new TChain("wcpselection/T_eval");
 	TChain *wc_PFeval_tree = new TChain("wcpselection/T_PFeval");
 	TChain *wc_POT_tree = new TChain("wcpselection/T_pot");
+	TChain *wc_spacepoints_tree = new TChain("wcpselection/T_spacepoints");
 	TChain *lantern_tree = new TChain("lantern/EventTree");
     
 	pelee_tree->Add(input_filename.c_str());
@@ -58,23 +59,13 @@ int main(int argc, char *argv[]) {
 	wc_eval_tree->Add(input_filename.c_str());
 	wc_PFeval_tree->Add(input_filename.c_str());
 	wc_POT_tree->Add(input_filename.c_str());
+	wc_spacepoints_tree->Add(input_filename.c_str());
 	lantern_tree->Add(input_filename.c_str());
-
-	/*
-	TTree *pelee_tree = (TTree*)inputFile->Get("nuselection/NeutrinoSelectionFilter");
-	TTree *subrunsTree = (TTree*)inputFile->Get("nuselection/SubRun");
-
-	TTree *wc_BDTvars_tree = (TTree*)inputFile->Get("wcpselection/T_BDTvars");
-	TTree *wc_eval_tree = (TTree*)inputFile->Get("wcpselection/T_eval");
-	TTree *wc_PFeval_tree = (TTree*)inputFile->Get("wcpselection/T_PFeval");
-	TTree *wc_POT_tree = (TTree*)inputFile->Get("wcpselection/T_pot");
-	TTree *lantern_tree = (TTree*)inputFile->Get("lantern/EventTree");
-	*/
 
 	// initialise classes
 	Utility _utility(false, false, false, false);
 	Selection _selection(_utility);
-	EventContainer _event(pelee_tree, wc_eval_tree, wc_BDTvars_tree, wc_PFeval_tree, lantern_tree, _utility);
+	EventContainer _event(pelee_tree, wc_eval_tree, wc_BDTvars_tree, wc_PFeval_tree, wc_spacepoints_tree, lantern_tree, _utility);
     
   	// Create output tree
   	TFile* outFile = new TFile( output_filename.c_str(), "recreate" );
@@ -113,7 +104,7 @@ int main(int argc, char *argv[]) {
 
 		pelee_tree->GetEntry(e);
 
-		std::cout << "Processing event " << _event.run << ":" << _event.sub << ":" << _event.evt << std::endl;
+		//std::cout << "Processing event " << _event.run << ":" << _event.sub << ":" << _event.evt << std::endl;
 
 		// skip issue MC events
 		if (type == Utility::kMC) {
@@ -141,6 +132,7 @@ int main(int argc, char *argv[]) {
 		// apply selection
 		// populates necessary variables to pass to stv tree
 		bool passSelection = _selection.ApplyLanternSelection(_event, type, runPeriod);
+		//bool passSelection = _selection.ApplyWCSelection(_event, type, runPeriod);
     
 		// set the output TTree branch addresses, creating the branches if needed
 		// (during the first event loop iteration)

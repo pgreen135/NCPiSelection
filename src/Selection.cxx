@@ -121,7 +121,7 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 				std::pow(_evt.lantern_trackEndPosY[idx_track] - _evt.lantern_trackStartPosY[idx_track], 2) +
 				std::pow(_evt.lantern_trackEndPosZ[idx_track] - _evt.lantern_trackStartPosZ[idx_track], 2) );
 			
-			if (track_length < 2) continue;
+			if (track_length < 5) continue;
 		
 			// check if classified
 			if (_evt.lantern_trackClassified[idx_track] == 0) {
@@ -160,6 +160,64 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	// save pion candidate index
 	_evt.lantern_pion_candidate_index = lantern_pion_candidate_indices[0];
 
+	// WC cross-check 
+	// count primary particles as classified by WC
+	int n_wc_reco_el = 0;
+	int n_wc_reco_mu = 0;
+	int n_wc_reco_pi = 0;
+	int n_wc_reco_pr = 0;
+	int n_wc_reco_other = 0;
+
+	for (unsigned int wc_idx = 0; wc_idx < _evt.wc_reco_Ntrack; wc_idx++) {
+
+		// skip WC pseudo-particles
+		if (_evt.wc_reco_pdg[wc_idx] == 22 || _evt.wc_reco_pdg[wc_idx] == 2112) continue; // skip pseudo-particles
+
+		// check primary
+		if (_evt.wc_reco_mother[wc_idx] != 0) continue; // require WC primary particle
+
+		// showers (electrons pdg)
+		if (_evt.wc_reco_pdg[wc_idx] == 11) {
+			// apply energy threshold
+			if (_evt.wc_reco_startMomentum[wc_idx][3] > 0.01) n_wc_reco_el++;			
+			continue;
+		}
+
+		// impose length requirement
+		// calculate track length
+		float wc_track_length = std::sqrt(
+		std::pow(_evt.wc_reco_startXYZT[wc_idx][0] - _evt.wc_reco_endXYZT[wc_idx][0], 2) +
+		std::pow(_evt.wc_reco_startXYZT[wc_idx][1] - _evt.wc_reco_endXYZT[wc_idx][1], 2) +
+		std::pow(_evt.wc_reco_startXYZT[wc_idx][2] - _evt.wc_reco_endXYZT[wc_idx][2], 2) );
+
+		if (wc_track_length < 5.0) continue; // 5 cm
+
+		if (_evt.wc_reco_pdg[wc_idx] == 13) {
+			n_wc_reco_mu++;
+			continue;
+		} else if (_evt.wc_reco_pdg[wc_idx] == 211) {
+			n_wc_reco_pi++;
+			continue;
+		} else if (_evt.wc_reco_pdg[wc_idx] == 2212) {
+			n_wc_reco_pr++;
+			continue;
+		}
+
+		// if here, unclassified track
+		n_wc_reco_other++;		
+
+	}
+
+	// Classical WC Selection
+	// reject events with WC identified electron
+	if (n_wc_reco_el > 0) return false; // reject events with primary shower
+
+	// require at least one WC identified muon or pion
+	if (n_wc_reco_mu + n_wc_reco_pi == 0) return false; // require at least one muon or pion
+
+	// max one WC identified muon or pion
+	if (n_wc_reco_mu + n_wc_reco_pi > 1) return false; // max one muon or pion
+
 	// LArPID LLR cuts
 	float mu_pi_llr_norm = std::tanh(0.5 * (_evt.lantern_trackPiScore[_evt.lantern_pion_candidate_index] - _evt.lantern_trackMuScore[_evt.lantern_pion_candidate_index]));
 	float pr_pi_llr_norm = std::tanh(0.5 * (_evt.lantern_trackPiScore[_evt.lantern_pion_candidate_index] - _evt.lantern_trackPrScore[_evt.lantern_pion_candidate_index]));
@@ -170,12 +228,12 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	_evt.sel_LanternPID_llr_pr_pi_ = pr_pi_llr_norm;
 
 	// require pion candidate to have mu/pi LLR < 0.4 (muon-like rejected)
-	if (mu_pi_llr_norm < 0.4) return false;
+	if (mu_pi_llr_norm < 0.6) return false;
 
 	_evt.sel_passMuPiLLR_= true;
 
 	// require pion candidate to have pr/pi LLR < 0.4 (proton-like rejected)
-	if (pr_pi_llr_norm < 0.4) return false;
+	if (pr_pi_llr_norm < 0.6) return false;
 	
 	// LArPID cuts	
 	//if (_evt.lantern_trackPiScore[_evt.lantern_pion_candidate_index] < -0.5) return false;
@@ -198,27 +256,18 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 				std::pow(_evt.lantern_trackEndPosY[idx_track] - _evt.lantern_trackStartPosY[idx_track], 2) +
 				std::pow(_evt.lantern_trackEndPosZ[idx_track] - _evt.lantern_trackStartPosZ[idx_track], 2) );
 			
-			if (track_length < 3) continue;
+			if (track_length < 2) continue;
 
-			// pion/muon LArPID score
-			//if (_evt.lantern_trackPiScore[idx_track] > -2.0) nSecondMuonPion++;
-			//else if (_evt.lantern_trackMuScore[idx_track] > -2.0) nSecondMuonPion++;
+			// look for non proton-like	tracks
 
-			double pr_pi_llr_norm = std::tanh(0.5 * (_evt.lantern_trackPiScore[idx_track] - _evt.lantern_trackPrScore[idx_track]));
-			double pr_mu_llr_norm = std::tanh(0.5 * (_evt.lantern_trackMuScore[idx_track] - _evt.lantern_trackPrScore[idx_track]));
-
-			if (pr_pi_llr_norm > 0.0 && _evt.lantern_trackClassified[idx_track] == 1) nSecondMuonPion++;
-			//else if (pr_mu_llr_norm > -0.25) nSecondMuonPion++;
-
-			if (_evt.lantern_trackClassified[idx_track] == 0) nUnclassified++;
-
-
-
+			if ( std::exp(_evt.lantern_trackPrScore[idx_track]) < 0.2) { // not proton-like
+				nSecondMuonPion++;
+				continue;
+			}
 		}
 	}
 
-	//if (nSecondMuonPion != 0) return false;
-	//if (nUnclassified != 0) return false;
+	if (nSecondMuonPion != 0) return false;
 
 	_evt.sel_NC1pi_ = true;
 
@@ -244,8 +293,6 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 
     // determine event weight
     _evt.calculateCVEventWeight(type, runPeriod); 
-
-	//return true;
 
 	// generic neutrino selection
 	if (_evt.wc_numu_cc_flag < 0) return false;		// WC generic neutrino selection
@@ -295,12 +342,11 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 	// at least one WC track
 	if(_evt.wc_primaryTrackIndex == -1) return false;
 
-	// require primary track within 4cm of vertex
-	if(_evt.wc_primaryTrackVertexSeparation > 5) return false; // primary track within 4cm of vertex
+	// require primary track within 5cm of vertex
+	if(_evt.wc_primaryTrackVertexSeparation > 5.0) return false; // primary track within 5cm of vertex
 
 	// track length
-	if (_evt.wc_primaryTrackLength < 5) return false; // WC primary track length > 5 cm
-	if (_evt.wc_primaryTrackLength > 150) return false; // WC primary track length < 100 cm
+	if (_evt.wc_primaryTrackLength < 5.0) return false; // WC primary track length > 10 cm
 
 	// count primary particles classified by LArPID
 	int n_wc_reco_larpid_el = 0;
@@ -336,7 +382,7 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][1] - _evt.wc_reco_nuvtxY, 2) +
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][2] - _evt.wc_reco_nuvtxZ, 2) );
 
-		if (wc_TrackVertexSeparation > 5) continue;
+		if (wc_TrackVertexSeparation > 5.0) continue;
 		
 		// impose length requirement
 		// calculate track length
@@ -345,8 +391,7 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][1] - _evt.wc_reco_endXYZT[wc_idx][1], 2) +
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][2] - _evt.wc_reco_endXYZT[wc_idx][2], 2) );
 
-		if (wc_track_length < 5) continue; // 5 cm
-		if (wc_track_length > 150) continue; // 150 cm	
+		if (wc_track_length < 5.0) continue; // 5 cm
 
 		if (_evt.wc_reco_larpid_pdg[wc_idx] == 13) {
 			wc_pion_candidate_indices.push_back(wc_idx);
@@ -398,7 +443,7 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][1] - _evt.wc_reco_nuvtxY, 2) +
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][2] - _evt.wc_reco_nuvtxZ, 2) );
 
-		if (wc_TrackVertexSeparation > 5) continue;
+		if (wc_TrackVertexSeparation > 5.0) continue;
 		
 		// impose length requirement
 		// calculate track length
@@ -407,8 +452,7 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][1] - _evt.wc_reco_endXYZT[wc_idx][1], 2) +
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][2] - _evt.wc_reco_endXYZT[wc_idx][2], 2) );
 
-		if (wc_track_length < 5) continue; // 5 cm
-		if (wc_track_length > 150) continue; // 150 cm	
+		if (wc_track_length < 5.0) continue; // 5 cm
 
 		if (_evt.wc_reco_pdg[wc_idx] == 13) {
 			wc_pion_candidate_indices_classical.push_back(wc_idx);
@@ -430,32 +474,8 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 
 	// store number of classified particles
 	_evt.n_wc_reco_larpid_unclassified = n_wc_reco_larpid_unclassified;	
-
-	// LArPID Style
-	/*
-	// reject events with unclassified non-stub tracks
-	if (n_wc_reco_larpid_unclassified > 0) return false;
-
-	// reject events with LArPID identified electron or photon
-	if (n_wc_reco_larpid_el > 0 || n_wc_reco_larpid_ph > 0) return false; // reject events with electron or photon
-
-	// require at least one LArPID identified muon or pion
-	if (n_wc_reco_larpid_mu + n_wc_reco_larpid_pi == 0) return false; // require at least one muon or pion
-
-	// max one LArPID identified muon or pion
-	if (n_wc_reco_larpid_mu + n_wc_reco_larpid_pi > 1) return false; // max one muon or pion
 	
-	// sanity check
-	if (wc_pion_candidate_indices.size() != 1) {
-		std::cout << "Error: Expected exactly one WC pion candidate, found " << wc_pion_candidate_indices.size() << std::endl;
-		return false;
-	}
-
-	// store candidate index
-	evt.wc_pion_candidate_index = wc_pion_candidate_indices[0];
-	*/
-	
-	// Classical Style
+	// Classical WC Selection
 	// reject events with WC identified electron
 	if (n_wc_reco_el > 0) return false; // reject events with primary shower
 
@@ -473,93 +493,33 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 	// store candidate index
 	_evt.wc_pion_candidate_index = wc_pion_candidate_indices_classical[0];
 
+	// LArPID selection
 	// check candidate is LARPID classified
-	if (_evt.wc_reco_larpid_classified[_evt.wc_pion_candidate_index] == 0) return false;	
-	
-	// counter number of daughters of candidate track and daughter total energy
-	int wc_n_pion_candidate_daughters = 0;
-	float wc_pion_candidate_daughters_total_energy = 0.0;
+	if (_evt.wc_reco_larpid_classified[_evt.wc_pion_candidate_index] == 0) return false;
 
-	for (unsigned int wc_idx = 0; wc_idx < _evt.wc_reco_Ntrack; wc_idx++) {
-		
-		// find tracks that are daughters of the candidate track
-		if (_evt.wc_reco_mother[wc_idx] != _evt.wc_reco_id[_evt.wc_pion_candidate_index] ) continue;
+	// reject events with unclassified non-stub tracks
+	if (n_wc_reco_larpid_unclassified > 0) return false;
 
-		// skip pseudo-particles
-		if (_evt.wc_reco_pdg[wc_idx] == 22 || _evt.wc_reco_pdg[wc_idx] == 2112) continue;
-		
-		// increment daughter count
-		wc_n_pion_candidate_daughters++;
+	// reject events with LArPID identified electron or photon
+	if (n_wc_reco_larpid_el > 0 || n_wc_reco_larpid_ph > 0) return false; // reject events with electron or photon
 
-		// increment daughter total energy
-		// check WC identified PDG to get mass to subtract
-		float mass = 0.0;
-		if (std::abs(_evt.wc_reco_pdg[wc_idx]) == 11) mass = 0.000511; // electron
-		else if (std::abs(_evt.wc_reco_pdg[wc_idx]) == 13) mass = 0.10566; // muon
-		else if (std::abs(_evt.wc_reco_pdg[wc_idx]) == 211) mass = 0.13957; // pion
-		else if (_evt.wc_reco_pdg[wc_idx] == 2212) mass = 0.93827; // proton
-		else if (std::abs(_evt.wc_reco_pdg[wc_idx]) == 321) mass = 0.49367; // kaon
-		else if (_evt.wc_reco_pdg[wc_idx] == 111) mass = 0.13498; // pi0
-		else {
-			std::cout << "Warning: Unknown PDG " << _evt.wc_reco_pdg[wc_idx] << " for WC daughter, assuming massless" << std::endl;
-		}
-		wc_pion_candidate_daughters_total_energy += _evt.wc_reco_startMomentum[wc_idx][3] - mass; // E, is this visible energy?
-	}
+	// construct LLR variables for pion candidate
+	// LArPID LLR cuts
+	float mu_pi_llr_norm = std::tanh(0.5 * (_evt.wc_reco_larpid_pidScore_pi[_evt.wc_pion_candidate_index] - _evt.wc_reco_larpid_pidScore_mu[_evt.wc_pion_candidate_index]));
+	float pr_pi_llr_norm = std::tanh(0.5 * (_evt.wc_reco_larpid_pidScore_pi[_evt.wc_pion_candidate_index] - _evt.wc_reco_larpid_pidScore_pr[_evt.wc_pion_candidate_index]));
+	float pr_mu_llr_norm = std::tanh(0.5 * (_evt.wc_reco_larpid_pidScore_mu[_evt.wc_pion_candidate_index] - _evt.wc_reco_larpid_pidScore_pr[_evt.wc_pion_candidate_index]));
 
-	// store number of daughters and total energy
-	_evt.wc_n_pion_candidate_daughters = wc_n_pion_candidate_daughters;
-	_evt.wc_pion_candidate_daughters_total_energy = wc_pion_candidate_daughters_total_energy;
+	_evt.sel_passInitialSelection_ = true;
+	_evt.sel_LanternPID_llr_mu_pi_ = mu_pi_llr_norm;
+	_evt.sel_LanternPID_llr_pr_pi_ = pr_pi_llr_norm;
 
-	// count number of blips at in 3/5/10cm of end of candidate track
-	int n_blips_100cm = 0;
-	int n_blips_25cm = 0;
-	int n_blips_50cm = 0;
+	// require pion candidate to have mu/pi LLR < 0.6 (muon-like rejected)
+	if (mu_pi_llr_norm < 0.825) return false;
 
-	for (unsigned int i_blip = 0; i_blip < _evt.nblips_saved; i_blip++) {
+	_evt.sel_passMuPiLLR_= true;
 
-		// blip position
-		float blip_x = _evt.blip_x_v->at(i_blip);
-		float blip_y = _evt.blip_y_v->at(i_blip);
-		float blip_z = _evt.blip_z_v->at(i_blip);
-
-		// distance from end of candidate track
-		float distance_from_end = std::sqrt(
-			std::pow(blip_x - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][0], 2) +
-			std::pow(blip_y - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][1], 2) +
-			std::pow(blip_z - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][2], 2) );
-		
-		// Lariat criteria
-		if (distance_from_end <= 3.0) continue; // ignore blips within 3 cm of end of track
-		if (_evt.blip_touchtrk_v->at(i_blip)) continue; // ignore blips touching a track
-		if (_evt.blip_proxtrkdist_v->at(i_blip) < 2.0) continue; // ignore blips within 2 cm of a track -- NOTE: PANDORA TRACKING
-		if (_evt.blip_energy_v->at(i_blip) > 3) continue; // ignore blips with energy > 3 MeV
-
-		if (distance_from_end <= 25.0) n_blips_25cm++;
-		if (distance_from_end <= 50.0) n_blips_50cm++;
-		if (distance_from_end <= 100.0) n_blips_100cm++;
-
-	}
-	// store number of blips
-	_evt.wc_n_blips_25cm = n_blips_25cm;
-	_evt.wc_n_blips_50cm = n_blips_50cm;
-	_evt.wc_n_blips_100cm = n_blips_100cm;
-	
-	// LArPID pion score requirement
-	//if (_evt.wc_reco_larpid_pidScore_pi[_evt.wc_pion_candidate_index] < -0.5) return false; // require pion-like tracks
-		
-	// LArPID muon score requirement, reject highly muon-like tracks
-	//if (_evt.wc_reco_larpid_pidScore_mu[_evt.wc_pion_candidate_index] > -2.25) return false; // reject muon-like tracks
-
-	// LArPID proton score requirement, reject highly proton-like tracks
-	//if (_evt.wc_reco_larpid_pidScore_pr[_evt.wc_pion_candidate_index] > -1.0) return false; // reject proton-like tracks
-
-	/*
-	// evaluate BDT score for pion/proton separation
-	float bdt_score = _bdt.evaluatePionProtonBDTScoreFHC(_evt, 0);
-	_evt.wc_bdt_score = bdt_score;
-
-	if (bdt_score < 0.4) return false;
-	*/
+	// require pion candidate to have pr/pi LLR < 0.5 (proton-like rejected)
+	if (pr_pi_llr_norm < 0.6) return false;
 
 	// veto second MIP-like track
 	int n_mip_like_tracks = 0;
@@ -581,7 +541,7 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][1] - _evt.wc_reco_nuvtxY, 2) +
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][2] - _evt.wc_reco_nuvtxZ, 2) );
 
-		if (wc_TrackVertexSeparation > 5) continue;
+		if (wc_TrackVertexSeparation > 5.0) continue;
 		
 		// impose length requirement
 		// calculate track length
@@ -590,17 +550,33 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][1] - _evt.wc_reco_endXYZT[wc_idx][1], 2) +
 		std::pow(_evt.wc_reco_startXYZT[wc_idx][2] - _evt.wc_reco_endXYZT[wc_idx][2], 2) );
 
-		if (wc_track_length < 5) continue; // 5 cm
-		if (wc_track_length > 150) continue; // 150 cm	
+		if (wc_track_length < 3.0) continue; // 5 cm
+
+		// check classified by LArPID
+		if (_evt.wc_reco_larpid_classified[wc_idx] == 0) continue; // only consider classified tracks
 
 		// count number muon-like tracks
-		if ( _evt.wc_reco_larpid_pidScore_mu[_evt.wc_pion_candidate_index] > -2.0) {
+		//if ( std::exp(_evt.wc_reco_larpid_pidScore_mu[wc_idx]) > 0.5 || std::exp(_evt.wc_reco_larpid_pidScore_pi[wc_idx]) > 0.5) {
+		if ( std::exp(_evt.wc_reco_larpid_pidScore_pr[wc_idx]) < 0.25) { // not proton-like
 			n_mip_like_tracks++;
 			continue;
 		}		
 	}
 
-	//if (n_mip_like_tracks > 0) return false; // veto second MIP-like track
+	if (n_mip_like_tracks > 0) return false; // veto second MIP-like track
+
+	// calculate pion momentum for candidate track -- range
+	float wc_candidate_track_length = std::sqrt(
+		std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][0] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][0], 2) +
+		std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][1] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][1], 2) +
+		std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][2] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][2], 2) );
+
+	float pionMomentumRange = _evt.CalculatePionMomentumRange(wc_candidate_track_length);
+
+	// calculate pion momentum for candidate track -- hypfit
+	float pionMomentumHypfit = _evt.CalculatePionMomentumHypfit(_evt.wc_pion_candidate_index);
+
+	_evt.sel_NC1pi_ = true;
 
 	// event passes
     return true;

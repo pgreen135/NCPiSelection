@@ -11,8 +11,10 @@
 
 #include <TTree.h>
 #include <TVector3.h>
+#include <TFile.h>
 
 #include "../include/Utility.h"
+#include "../include/Hypfit.h"
 
 class EventContainer {
 
@@ -21,7 +23,7 @@ public:
 	// ----------------------------------
 	
 	// Constructor
-	EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc_BDTvars_tree, TTree *wc_PFeval_tree, TTree *lantern_tree, const Utility &utility);
+	EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc_BDTvars_tree, TTree *wc_PFeval_tree, TTree *wc_spacepoints_tree, TTree *lantern_tree, const Utility &utility);
 
 	// Destructor
 	~EventContainer();
@@ -47,6 +49,7 @@ public:
 	float GetTrackBraggPionBestPlane(unsigned int trackID);
 	float GetTrackBraggMIPBestPlane(unsigned int trackID);
   float CalculatePionMomentumRange(float R);
+  float CalculatePionMomentumHypfit(int candidateID);
   float GetShowerTrackEndProximity(unsigned int shrID);
   double GetNuMIAngle(double px, double py, double pz, std::string direction);
   void setRecoNuMIAngularVariables(bool isSideband);
@@ -54,6 +57,9 @@ public:
 
   // Print Daughters
 	void PrintDaughters(int pionID, std::vector<int>& daughters);
+
+  // FSI weights
+  double GetFSIWeight();
 
  
     // ----------------------------------
@@ -71,6 +77,15 @@ public:
   // --- Event weight ---
   // CV weight, before POT scaling
   float weight_cv; 
+
+  // FSI weight histograms d
+  TH2D *h_fsi_nc_piplus;
+  TH2D *h_fsi_nc_piminus;
+  TH2D *h_fsi_cc_piplus;
+  TH2D *h_fsi_cc_piminus;
+
+  // Hypfit object
+  Hypfit *hypfit;
 
 	// --- Reconstruction failures information ---
 	bool hasSplitPrimaryShower;
@@ -213,6 +228,12 @@ public:
 
   std::vector<std::string> *wc_truth_process = nullptr;
   std::vector<std::string> *wc_truth_endprocess = nullptr;
+
+  std::vector<float> *wc_Trecchargeblob_spacepoints_x = nullptr;
+  std::vector<float> *wc_Trecchargeblob_spacepoints_y = nullptr;
+  std::vector<float> *wc_Trecchargeblob_spacepoints_z = nullptr;
+  std::vector<int> *wc_Trecchargeblob_spacepoints_real_cluster_id = nullptr;
+  std::vector<float> *wc_Trecchargeblob_spacepoints_q = nullptr;
 
   // particle classification
   std::vector<Utility::ParticleEnums> wc_particle_classification_v;

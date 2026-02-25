@@ -39,6 +39,7 @@ void StackedHistTool::InstantiateHistOrder(){
     hist_order.push_back(_utility.kNC1pi);
     hist_order.push_back(_utility.kNCOther);
     hist_order.push_back(_utility.kCCNumu0pi);
+    hist_order.push_back(_utility.kCCNumu1pi);
     hist_order.push_back(_utility.kCCNumuNpi);
     hist_order.push_back(_utility.kCCNumuOther);
     hist_order.push_back(_utility.kCCNue);    
@@ -186,27 +187,29 @@ void StackedHistTool::StyleHistsStack()
     hists[0] ->SetFillColor(kCyan+3); // kNC1pi
     hists[1] ->SetFillColor(kMagenta+2); // kNCOther
     hists[2] ->SetFillColor(kBlue-3); // kCCNumu0pi
-    hists[3] ->SetFillColor(kBlue-6); // kCCNumuNpi
-    hists[4] ->SetFillColor(kBlue-5); // kCCNumuOther
-    hists[5] ->SetFillColor(kRed); // kCCNue
-    hists[6]->SetFillColor(kGray+1); // Out FV
-    hists[7]->SetFillColor(kRed-3); // Out of Cryo
-    hists[8]->SetFillColor(kGray+3); // Beam Off
+    hists[3] ->SetFillColor(kBlue-6); // kCCNumu1pi
+    hists[4] ->SetFillColor(kBlue-5); // kCCNumuNpi
+    hists[5] ->SetFillColor(kBlue-10); // kCCNumuOther
+    hists[6] ->SetFillColor(kRed); // kCCNue
+    hists[7]->SetFillColor(kGray+1); // Out FV
+    hists[8]->SetFillColor(kRed-3); // Out of Cryo
+    hists[9]->SetFillColor(kGray+3); // Beam Off
 
     // Set line color for all histograms
     hists[0] ->SetLineColor(kCyan+3); // kNC1pi
     hists[1] ->SetLineColor(kMagenta+2); // kNCOther
     hists[2] ->SetLineColor(kBlue-3); // kCCNumu0pi
-    hists[3] ->SetLineColor(kBlue-6); // kCCNumuNpi
-    hists[4] ->SetLineColor(kBlue-5); // kCCNumuOther
-    hists[5] ->SetLineColor(kRed); // kCCNue
-    hists[6]->SetLineColor(kGray+1); // Out FV
-    hists[7]->SetLineColor(kRed-3); // Out of Cryo
-    hists[8]->SetLineColor(kGray+3); // Beam Off
+    hists[3] ->SetLineColor(kBlue-6); // kCCNumu1pi
+    hists[4] ->SetLineColor(kBlue-5); // kCCNumuNpi
+    hists[5] ->SetLineColor(kBlue-10); // kCCNumuOther
+    hists[6] ->SetLineColor(kRed); // kCCNue
+    hists[7]->SetLineColor(kGray+1); // Out FV
+    hists[8]->SetLineColor(kRed-3); // Out of Cryo
+    hists[9]->SetLineColor(kGray+3); // Beam Off
 
     // Set fill style
-    hists[7]->SetFillStyle(3004); // Out of Cryo
-    hists[8]->SetFillStyle(3005); // Beam Off
+    hists[8]->SetFillStyle(3004); // Out of Cryo
+    hists[9]->SetFillStyle(3005); // Beam Off
   }
   else if (configMode == "Interaction") {
     hists[0] ->SetFillColor(kBlue-3); // QE
@@ -440,6 +443,9 @@ std::string StackedHistTool::topologyenum2str(Utility::ClassificationEnums topol
     break;
   case Utility::kCCNumu0pi:
     returnString = "#nu_{#mu} CC 0#pi^{#pm}";
+    break;
+  case Utility::kCCNumu1pi:
+    returnString = "#nu_{#mu} CC 1#pi^{#pm}";
     break;
   case Utility::kCCNumuNpi:
     returnString = "#nu_{#mu} CC N#pi^{#pm}";
@@ -727,10 +733,10 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
     returnString = "LAr PID Muon Score";
     break;
   case Utility::kLArPID_pi:
-    returnString = "LANTERN LArPID Muon-Pion Score";
+    returnString = "WC LArPID Muon-Pion Score";
     break;
   case Utility::kLArPID_pr:
-    returnString = "LAr PID Proton Score";
+    returnString = "WC LArPID Proton-Pion Score";
     break;
   case Utility::kLArPID_prim:
     returnString = "LAr PID Primary Process Score";
