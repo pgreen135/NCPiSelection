@@ -543,8 +543,9 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 					if (mc_pdg_v->at(i) == 223) nomega++;
 					if (mc_pdg_v->at(i) == 333) nphi++;   	
 				}
-
-				if (npion_threshold == 1 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
+				// currently numu only
+				// check for exactly 1 pion and no other mesons above threshold
+				if (nu_pdg == 14 && npion_threshold == 1 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
 					// classify as NC 1pi
 					classification = Utility::kNC1pi;
 					category_ = static_cast<int>(classification);

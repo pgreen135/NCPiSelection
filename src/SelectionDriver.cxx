@@ -34,25 +34,25 @@ void SelectionDriver::runBDTSelectionFull() {
 	// lists of file names, weights and types to run over
 	
 	// SURPRISE test samples
-	std::vector<std::string> filename_list = {//filename_mc_run4b, filename_dirt_run4b, filename_beamoff_run4b//,
-											  //filename_mc_run4c, filename_dirt_run4c,
-											  //filename_mc_run4d, filename_dirt_run4d,
+	std::vector<std::string> filename_list = {filename_mc_run4b, filename_dirt_run4b, filename_beamoff_run4b,
+											  filename_mc_run4c, filename_dirt_run4c, filename_beamoff_run4c,
+											  filename_mc_run4d, filename_dirt_run4d, filename_beamoff_run4d,
 											  filename_mc_run5,  filename_dirt_run5, filename_beamoff_run5
 											  };
-	std::vector<double> pot_weight_list = {//pot_weight_mc_run4b, pot_weight_dirt_run4b, pot_weight_beamoff_run4b,
-										   //pot_weight_mc_run4c, pot_weight_dirt_run4c,
-										   //pot_weight_mc_run4d, pot_weight_dirt_run4d,
+	std::vector<double> pot_weight_list = {pot_weight_mc_run4b, pot_weight_dirt_run4b, pot_weight_beamoff_run4b,
+										   pot_weight_mc_run4c, pot_weight_dirt_run4c, pot_weight_beamoff_run4c,
+										   pot_weight_mc_run4d, pot_weight_dirt_run4d, pot_weight_beamoff_run4d,
 										   pot_weight_mc_run5,  pot_weight_dirt_run5, pot_weight_beamoff_run5
 										   };
 	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kMC, Utility::kDirt, Utility::kEXT,
-												 		   Utility::kMC, Utility::kDirt,
-												           Utility::kMC, Utility::kDirt,
-												           Utility::kMC, Utility::kDirt
+												 		   Utility::kMC, Utility::kDirt, Utility::kEXT,
+												           Utility::kMC, Utility::kDirt, Utility::kEXT,
+												           Utility::kMC, Utility::kDirt, Utility::kEXT,
 													    };
 	std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
-															 Utility::kRun4ab, Utility::kRun4ab,
-															 Utility::kRun4ab, Utility::kRun4ab,
-															 Utility::kRun4ab,    Utility::kRun4ab
+															 Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
+															 Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
+															 Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
 															};
 
 	// construct classes
@@ -148,6 +148,11 @@ void SelectionDriver::runBDTSelectionFull() {
 	StackedHistTool _histStack_lantern_larpid_mupi_llr_particle("", "", 20, -1, 1.001, _utility, "Particle");
 	StackedHistTool _histStack_lantern_larpid_prpi_llr_particle("", "", 20, -1, 1.001, _utility, "Particle");
 	StackedHistTool _histStack_lantern_larpid_prmu_llr_particle("", "", 20, -1, 1.001, _utility, "Particle");
+
+	// WC Lantern Candidate Matching
+	StackedHistTool _histStack_wc_lantern_candidate_start_distance("", "", 50, 0, 100, _utility);
+	StackedHistTool _histStack_wc_lantern_candidate_end_distance("", "", 50, 0, 100, _utility);
+	StackedHistTool _histStack_wc_lantern_candidate_angle_difference("", "", 40, 0, 180, _utility);
 	
 	// Counters
 	int n_data_pass = 0;
@@ -767,10 +772,51 @@ void SelectionDriver::runBDTSelectionFull() {
 				*/
 			
 			}
+
+			// populate WC/Lantern candidate consistency histograms
+			// only when both populated 
+			if (_event.wc_pion_candidate_index != -1 && _event.lantern_pion_candidate_index != -1) {
+
+				// calculate start distance between WC and Lantern candidates
+				float wc_candidate_start[3] = {_event.wc_reco_startXYZT[_event.wc_pion_candidate_index][0], _event.wc_reco_startXYZT[_event.wc_pion_candidate_index][1], _event.wc_reco_startXYZT[_event.wc_pion_candidate_index][2]};
+				float lantern_candidate_start[3] = {_event.lantern_trackStartPosX[_event.lantern_pion_candidate_index], _event.lantern_trackStartPosY[_event.lantern_pion_candidate_index], _event.lantern_trackStartPosZ[_event.lantern_pion_candidate_index]};
+				float start_distance = std::sqrt(
+					std::pow(wc_candidate_start[0] - lantern_candidate_start[0], 2) +
+					std::pow(wc_candidate_start[1] - lantern_candidate_start[1], 2) +
+					std::pow(wc_candidate_start[2] - lantern_candidate_start[2], 2) );
+				
+				// calculate end distance between WC and Lantern candidates
+				float wc_candidate_end[3] = {_event.wc_reco_endXYZT[_event.wc_pion_candidate_index][0], _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][1], _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][2]};
+				float lantern_candidate_end[3] = {_event.lantern_trackEndPosX[_event.lantern_pion_candidate_index], _event.lantern_trackEndPosY[_event.lantern_pion_candidate_index], _event.lantern_trackEndPosZ[_event.lantern_pion_candidate_index]};
+				float end_distance = std::sqrt(
+					std::pow(wc_candidate_end[0] - lantern_candidate_end[0], 2) +
+					std::pow(wc_candidate_end[1] - lantern_candidate_end[1], 2) +
+					std::pow(wc_candidate_end[2] - lantern_candidate_end[2], 2) );
+				
+			    // calculate angle between WC and Lantern candidates, in degrees
+				float wc_candidate_vector[3] = {wc_candidate_end[0] - wc_candidate_start[0], wc_candidate_end[1] - wc_candidate_start[1], wc_candidate_end[2] - wc_candidate_start[2]};
+				float lantern_candidate_vector[3] = {lantern_candidate_end[0] - lantern_candidate_start[0], lantern_candidate_end[1] - lantern_candidate_start[1], lantern_candidate_end[2] - lantern_candidate_start[2]};
+
+				// calculate dot product of vectors
+				float dot_product = wc_candidate_vector[0]*lantern_candidate_vector[0] + wc_candidate_vector[1]*lantern_candidate_vector[1] + wc_candidate_vector[2]*lantern_candidate_vector[2];
+				// calculate magnitudes of vectors
+				float wc_magnitude = std::sqrt(wc_candidate_vector[0]*wc_candidate_vector[0] + wc_candidate_vector[1]*wc_candidate_vector[1] + wc_candidate_vector[2]*wc_candidate_vector[2]);
+				float lantern_magnitude = std::sqrt(lantern_candidate_vector[0]*lantern_candidate_vector[0] + lantern_candidate_vector[1]*lantern_candidate_vector[1] + lantern_candidate_vector[2]*lantern_candidate_vector[2]);
+				// calculate angle in radians
+				float angle_rad = 0;
+				if (wc_magnitude > 0 && lantern_magnitude > 0) {
+					angle_rad = std::acos(dot_product / (wc_magnitude * lantern_magnitude));
+				}
+				// convert to degrees
+				float angle_deg = angle_rad * 180. / M_PI;
+
+				// populate histograms
+				_histStack_wc_lantern_candidate_start_distance.Fill(_event.classification, start_distance, pot_weight * _event.weight_cv);
+				_histStack_wc_lantern_candidate_end_distance.Fill(_event.classification, end_distance, pot_weight * _event.weight_cv);
+				_histStack_wc_lantern_candidate_angle_difference.Fill(_event.classification, angle_deg, pot_weight * _event.weight_cv);
+			}
+				
 		}
-
-		
-
 
 		// clean up
 		f->Close();
@@ -994,6 +1040,17 @@ void SelectionDriver::runBDTSelectionFull() {
 	TCanvas *l9 = new TCanvas("l9", "l9", 1080, 1080);
 	_histStack_lantern_larpid_pidScore_pr.DrawStack(l9, Utility::kLArPID_pr);
   	l9->Print("plots/plot_lantern_larpid_pidScore_pr.root");
+
+	// lantern/wc candidate consistency
+	TCanvas *l10 = new TCanvas("l10", "l10", 1080, 1080);
+	_histStack_wc_lantern_candidate_start_distance.DrawStack(l10, Utility::kTrackDistance);
+  	l10->Print("plots/plot_wc_lantern_candidate_start_distance.root");
+	TCanvas *l11 = new TCanvas("l11", "l11", 1080, 1080);
+	_histStack_wc_lantern_candidate_end_distance.DrawStack(l11, Utility::kTrackDistance);
+  	l11->Print("plots/plot_wc_lantern_candidate_end_distance.root");
+	TCanvas *l12 = new TCanvas("l12", "l12", 1080, 1080);
+	_histStack_wc_lantern_candidate_angle_difference.DrawStack(l12, Utility::kOpeningAngle);
+  	l12->Print("plots/plot_wc_lantern_candidate_angle_difference.root");
 
 	// WC LArPID per particle
 	TCanvas *wc_p1 = new TCanvas("wc_p1", "wc_p1", 1080, 1080);

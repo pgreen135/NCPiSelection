@@ -103,6 +103,10 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 
 	if (n_particle_WC < 1) return false;
 
+	// WC / Lantern vertices are consistent
+	if (_evt.vertex_discrepancy > 5) return false; // require WC and Lantern vertices to be within 5cm
+
+
 	// classify primary tracks
 	int n_lantern_larpid_mu = 0;
 	int n_lantern_larpid_pi = 0;
@@ -168,6 +172,8 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	int n_wc_reco_pr = 0;
 	int n_wc_reco_other = 0;
 
+	std::vector<unsigned int> wc_pion_candidate_indices_classical;
+
 	for (unsigned int wc_idx = 0; wc_idx < _evt.wc_reco_Ntrack; wc_idx++) {
 
 		// skip WC pseudo-particles
@@ -193,9 +199,11 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 		if (wc_track_length < 5.0) continue; // 5 cm
 
 		if (_evt.wc_reco_pdg[wc_idx] == 13) {
+			wc_pion_candidate_indices_classical.push_back(wc_idx);
 			n_wc_reco_mu++;
 			continue;
 		} else if (_evt.wc_reco_pdg[wc_idx] == 211) {
+			wc_pion_candidate_indices_classical.push_back(wc_idx);
 			n_wc_reco_pi++;
 			continue;
 		} else if (_evt.wc_reco_pdg[wc_idx] == 2212) {
@@ -209,14 +217,51 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	}
 
 	// Classical WC Selection
-	// reject events with WC identified electron
+	// reject events with WC identified primary shower
 	if (n_wc_reco_el > 0) return false; // reject events with primary shower
 
-	// require at least one WC identified muon or pion
-	if (n_wc_reco_mu + n_wc_reco_pi == 0) return false; // require at least one muon or pion
+	// require one and only one WC identified muon or pion
+	if (n_wc_reco_mu + n_wc_reco_pi != 1) return false; // require at least one muon or pion
 
-	// max one WC identified muon or pion
-	if (n_wc_reco_mu + n_wc_reco_pi > 1) return false; // max one muon or pion
+	_evt.wc_pion_candidate_index = wc_pion_candidate_indices_classical[0];
+
+	// Consistency check between WC and Lantern candidate
+	// Distance between candidate track start positions
+	// calculate start distance between WC and Lantern candidates
+	float wc_candidate_start[3] = {_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][0], _evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][1], _evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][2]};
+	float lantern_candidate_start[3] = {_evt.lantern_trackStartPosX[_evt.lantern_pion_candidate_index], _evt.lantern_trackStartPosY[_evt.lantern_pion_candidate_index], _evt.lantern_trackStartPosZ[_evt.lantern_pion_candidate_index]};
+	float start_distance = std::sqrt(
+		std::pow(wc_candidate_start[0] - lantern_candidate_start[0], 2) +
+		std::pow(wc_candidate_start[1] - lantern_candidate_start[1], 2) +
+		std::pow(wc_candidate_start[2] - lantern_candidate_start[2], 2) );
+	
+	// calculate end distance between WC and Lantern candidates
+	float wc_candidate_end[3] = {_evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][0], _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][1], _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][2]};
+	float lantern_candidate_end[3] = {_evt.lantern_trackEndPosX[_evt.lantern_pion_candidate_index], _evt.lantern_trackEndPosY[_evt.lantern_pion_candidate_index], _evt.lantern_trackEndPosZ[_evt.lantern_pion_candidate_index]};
+	float end_distance = std::sqrt(
+		std::pow(wc_candidate_end[0] - lantern_candidate_end[0], 2) +
+		std::pow(wc_candidate_end[1] - lantern_candidate_end[1], 2) +
+		std::pow(wc_candidate_end[2] - lantern_candidate_end[2], 2) );
+
+	// calculate angle between WC and Lantern candidates, in degrees
+	float wc_candidate_vector[3] = {wc_candidate_end[0] - wc_candidate_start[0], wc_candidate_end[1] - wc_candidate_start[1], wc_candidate_end[2] - wc_candidate_start[2]};
+	float lantern_candidate_vector[3] = {lantern_candidate_end[0] - lantern_candidate_start[0], lantern_candidate_end[1] - lantern_candidate_start[1], lantern_candidate_end[2] - lantern_candidate_start[2]};
+
+	// calculate dot product of vectors
+	float dot_product = wc_candidate_vector[0]*lantern_candidate_vector[0] + wc_candidate_vector[1]*lantern_candidate_vector[1] + wc_candidate_vector[2]*lantern_candidate_vector[2];
+	// calculate magnitudes of vectors
+	float wc_magnitude = std::sqrt(wc_candidate_vector[0]*wc_candidate_vector[0] + wc_candidate_vector[1]*wc_candidate_vector[1] + wc_candidate_vector[2]*wc_candidate_vector[2]);
+	float lantern_magnitude = std::sqrt(lantern_candidate_vector[0]*lantern_candidate_vector[0] + lantern_candidate_vector[1]*lantern_candidate_vector[1] + lantern_candidate_vector[2]*lantern_candidate_vector[2]);
+	// calculate angle in radians
+	float angle_rad = 0;
+	if (wc_magnitude > 0 && lantern_magnitude > 0) {
+		angle_rad = std::acos(dot_product / (wc_magnitude * lantern_magnitude));
+	}
+	// convert to degrees
+	float angle_deg = angle_rad * 180. / M_PI;
+
+	if (start_distance > 5) return false; // require WC and Lantern candidates to start within 5cm
+	if (angle_deg > 20) return false; // require WC and Lantern candidates to be within 20 degrees
 
 	// LArPID LLR cuts
 	float mu_pi_llr_norm = std::tanh(0.5 * (_evt.lantern_trackPiScore[_evt.lantern_pion_candidate_index] - _evt.lantern_trackMuScore[_evt.lantern_pion_candidate_index]));
@@ -228,12 +273,12 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	_evt.sel_LanternPID_llr_pr_pi_ = pr_pi_llr_norm;
 
 	// require pion candidate to have mu/pi LLR < 0.4 (muon-like rejected)
-	if (mu_pi_llr_norm < 0.6) return false;
+	if (mu_pi_llr_norm < 0.5) return false;
 
 	_evt.sel_passMuPiLLR_= true;
 
 	// require pion candidate to have pr/pi LLR < 0.4 (proton-like rejected)
-	if (pr_pi_llr_norm < 0.6) return false;
+	//if (pr_pi_llr_norm < 0.5) return false;
 	
 	// LArPID cuts	
 	//if (_evt.lantern_trackPiScore[_evt.lantern_pion_candidate_index] < -0.5) return false;
@@ -267,7 +312,7 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 		}
 	}
 
-	if (nSecondMuonPion != 0) return false;
+	//if (nSecondMuonPion != 0) return false;
 
 	_evt.sel_NC1pi_ = true;
 
