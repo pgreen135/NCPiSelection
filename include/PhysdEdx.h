@@ -32,6 +32,7 @@ public:
   void CreateSplineAtKE(int iKE);
 
   double dEdx_PDF(double KE, double pitch, double dEdx);
+  double dEdx_PDF_max(double KE, double pitch);
   double dEdx_Gaus_Sigma(double KE, double pitch);
   
  private:

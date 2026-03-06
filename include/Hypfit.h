@@ -21,7 +21,7 @@ private:
 
   // == Tunable parameters
   int N_skip = 3;
-  double max_additional_res_length_pion = 450.; // == [cm]
+  double max_additional_res_length_pion = 200.; // == [cm]
   double max_additional_res_length_proton = 120.; // == [cm]
   double res_length_step_pion = 1.0; // == [cm]
   double res_length_step_proton = 0.2; // == [cm]

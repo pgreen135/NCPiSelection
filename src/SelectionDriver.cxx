@@ -7,11 +7,16 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <TLine.h>
+#include <TH1F.h>
+#include <TH2F.h>
+#include <TGraph.h>
 
 #include "../include/EventContainer.h"
 #include "../include/CreateTrainingTree.h"
 #include "../include/Selection.h"
 #include "../include/StackedHistTool.h"
+
+#include "../include/PhysdEdx.h"
 
 
 // Constructor
@@ -34,20 +39,20 @@ void SelectionDriver::runBDTSelectionFull() {
 	// lists of file names, weights and types to run over
 	
 	// SURPRISE test samples
-	std::vector<std::string> filename_list = {filename_mc_run4b, filename_dirt_run4b, filename_beamoff_run4b,
-											  filename_mc_run4c, filename_dirt_run4c, filename_beamoff_run4c,
-											  filename_mc_run4d, filename_dirt_run4d, filename_beamoff_run4d,
-											  filename_mc_run5,  filename_dirt_run5, filename_beamoff_run5
+	std::vector<std::string> filename_list = {filename_mc_run4b, //filename_dirt_run4b, filename_beamoff_run4b,
+											  //filename_mc_run4c, //filename_dirt_run4c, filename_beamoff_run4c,
+											  //filename_mc_run4d, //filename_dirt_run4d, filename_beamoff_run4d,
+											  //filename_mc_run5//,  filename_dirt_run5, filename_beamoff_run5
 											  };
-	std::vector<double> pot_weight_list = {pot_weight_mc_run4b, pot_weight_dirt_run4b, pot_weight_beamoff_run4b,
-										   pot_weight_mc_run4c, pot_weight_dirt_run4c, pot_weight_beamoff_run4c,
-										   pot_weight_mc_run4d, pot_weight_dirt_run4d, pot_weight_beamoff_run4d,
-										   pot_weight_mc_run5,  pot_weight_dirt_run5, pot_weight_beamoff_run5
+	std::vector<double> pot_weight_list = {pot_weight_mc_run4b,//, pot_weight_dirt_run4b, pot_weight_beamoff_run4b,
+										   pot_weight_mc_run4c,//, pot_weight_dirt_run4c, pot_weight_beamoff_run4c,
+										   pot_weight_mc_run4d,//, pot_weight_dirt_run4d, pot_weight_beamoff_run4d,
+										   pot_weight_mc_run5//,  pot_weight_dirt_run5, pot_weight_beamoff_run5
 										   };
-	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kMC, Utility::kDirt, Utility::kEXT,
-												 		   Utility::kMC, Utility::kDirt, Utility::kEXT,
-												           Utility::kMC, Utility::kDirt, Utility::kEXT,
-												           Utility::kMC, Utility::kDirt, Utility::kEXT,
+	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kMC,//, Utility::kDirt, Utility::kEXT,
+												 		   Utility::kMC,//, Utility::kDirt, Utility::kEXT,
+												           Utility::kMC,//, Utility::kDirt, Utility::kEXT,
+												           Utility::kMC//, Utility::kDirt, Utility::kEXT,
 													    };
 	std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
 															 Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
@@ -153,6 +158,20 @@ void SelectionDriver::runBDTSelectionFull() {
 	StackedHistTool _histStack_wc_lantern_candidate_start_distance("", "", 50, 0, 100, _utility);
 	StackedHistTool _histStack_wc_lantern_candidate_end_distance("", "", 50, 0, 100, _utility);
 	StackedHistTool _histStack_wc_lantern_candidate_angle_difference("", "", 40, 0, 180, _utility);
+
+	// Observables
+	StackedHistTool _histStack_sel_pion_theta("", "", 40, -1.0, 1.0, _utility);
+	StackedHistTool _histStack_sel_pion_phi("", "", 18, -180, 180, _utility);
+
+	// resolution plots
+	TH1F *pionMomentum1D = new TH1F("", "", 50, -1.0, 1.0);														
+	TH2F *pionMomentum2D = new TH2F("", "", 20, 0, 2.0, 20, 0, 2.0);
+
+	TH2F *pionTheta2D = new TH2F("", "", 40, -1.0, 1.0, 40, -1.0, 1.0);
+
+	// dE/dx vs residual range histogram
+	TH2F *dEdx_vs_ResRange = new TH2F("", "", 100, 0, 200, 100, 0, 10);
+	PhysdEdx _physdedx(13); // == muon
 	
 	// Counters
 	int n_data_pass = 0;
@@ -211,11 +230,16 @@ void SelectionDriver::runBDTSelectionFull() {
 	  	std::cout << "Initial number events: " << n_entries << std::endl;
 
 	  	for (int e = 0; e < n_entries; e++) {
-		//for (int e = 0; e < 50000; e++) {
+		//for (int e = 0; e < 100000; e++) {
 
 			// skip events with problems in test sample
 			// need to load PeLEE tree first to get RSE
 			pelee_tree->GetEntry(e);
+
+			// Hypfit Testing -- Pick single track
+			//if (!(_event.run == 20342 && _event.sub == 83 && _event.evt == 4177)) continue;
+			//if (!(_event.run == 19925 && _event.sub == 535 && _event.evt == 26768)) continue;
+			//std::cout << "Hypfit Debugging Mode" << std::endl;
 
 			// why are these an issue?
 			if (file_types_list[idx] == Utility::kMC) {
@@ -245,15 +269,17 @@ void SelectionDriver::runBDTSelectionFull() {
 			wc_eval_tree->GetEntry(e);
 			//std::cout << "Loaded WC Eval Tree" << std::endl;
 			wc_PFeval_tree->GetEntry(e); 
+			wc_spacepoints_tree->GetEntry(e);
 			//std::cout << "Loaded WC PFEval Tree" << std::endl;
 			lantern_tree->GetEntry(e);
+			
 			
 		    if ( (e != 0) && (n_entries >= 10) &&  (e % (n_entries/10) == 0) ) {
 		      std::cout << Form("%i0%% Completed...\n", e / (n_entries/10));
 		    }
 			
 			//std::cout << "Processing event " << e << ": Run " << _event.run << ", Subrun " << _event.sub << ", Event " << _event.evt << std::endl;
-
+			
 			// RSE check
 			if (_event.run != _event.wc_run || _event.sub != _event.wc_sub || _event.evt != _event.wc_evt) {
 				std::cout << "RSE mismatch for event: " << e << ". Pandora Run: " << _event.run << ", Subrun: " << _event.sub << ", Event: " << _event.evt 
@@ -269,6 +295,7 @@ void SelectionDriver::runBDTSelectionFull() {
 			
 		    // evaluate correct POT weight accounting for special cases
 		    double pot_weight = pot_weight_list[idx];
+			
 
 			// increment all signal counter
 			if (_event.classification == Utility::kNC1pi) {
@@ -312,24 +339,16 @@ void SelectionDriver::runBDTSelectionFull() {
 			}
 		    
 		    if (!passSelection) continue;
+			//if (!_event.sel_CC0piFarSideband_) continue;
+			//if (!_event.sel_CC0piNearSideband_) continue;
+			//if (!_event.sel_CC1piSideband_) continue;
+			//if (!_event.sel_NCNpSideband_) continue;
 		   
 		    if (file_types_list[idx] == Utility::kData) {
 		    	n_data_pass++;
 		    	std::cout << "Passing data event -- " << "Run: " << _event.run << ", Subrun: " << _event.sub << ", Event: " << _event.evt << ", Electron energy: " << _event.shr_energy_cali << ", Visible energy: " << _event.NeutrinoEnergy2/1000 << " GeV" << std::endl;
 		    	continue;
 		    }
-
-			// output event of interest
-			/*
-			if (_event.classification == Utility::kCCNumuNpi) {
-				if (_event.npion != 1) continue;
-				if (_event.nproton != 0) continue;
-				if (_event.pion_e < 0.3 || _event.pion_e > 0.4) continue;
-				if (_event.muon_e < 0.3 || _event.muon_e > 0.4) continue;
-				std::cout << "Run: " << _event.run << ", Subrun: " << _event.sub << ", Event: " << _event.evt;
-				std::cout << ", Pandora truth: muon_e = " << _event.muon_e << ", npion" << _event.npion << ", pion_e" << _event.pion_e << ", nproton" << _event.nproton << std::endl;
-			}
-			*/
 
 			// increment passing signal counter
 			if (_event.classification == Utility::kNC1pi) {
@@ -350,6 +369,27 @@ void SelectionDriver::runBDTSelectionFull() {
 					n_signal_pass_absorptionNp += pot_weight * _event.weight_cv;
 					
 				}
+
+				/*
+				// Print out RSE:
+				std::cout << "Signal Event Run: " << _event.run << ", Subrun: " << _event.sub << ", Event: " << _event.evt;
+
+				// check WC candidate backtracked PDG
+				std::cout << ", Backtracked PDG: " << _event.wc_particle_classification_v[_event.wc_pion_candidate_index];
+
+				// track length
+				float wc_track_length = std::sqrt(
+				std::pow(_event.wc_reco_startXYZT[_event.wc_pion_candidate_index][0] - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][0], 2) +
+				std::pow(_event.wc_reco_startXYZT[_event.wc_pion_candidate_index][1] - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][1], 2) +
+				std::pow(_event.wc_reco_startXYZT[_event.wc_pion_candidate_index][2] - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][2], 2) );
+				std::cout << ", Length: " << wc_track_length;
+
+				// truth momentum
+				std::cout << ", Truth Pion Momentum: " << _event.mc_pion_momentum_;
+
+				// reconstructd pion momentum
+				std::cout << ", Reconstructed Pion Momentum: Range = " << _event.pionMomentumRange << ", Hypfit: " << _event.pionMomentumHypfit << std::endl;
+				*/
 
 				/*
 				// truth pion process
@@ -376,6 +416,10 @@ void SelectionDriver::runBDTSelectionFull() {
 
 			// increment total passing counter
 			n_total_pass += pot_weight * _event.weight_cv;
+
+			// fill observables for passing events
+			_histStack_sel_pion_theta.Fill(_event.classification, _event.sel_pion_theta_, pot_weight * _event.weight_cv);
+			_histStack_sel_pion_phi.Fill(_event.classification, (_event.sel_pion_phi_)*180/3.1416, pot_weight * _event.weight_cv);
 
 		    // fill histogram(s) - pelee variables
 		    _histStack_contained_fraction.Fill(_event.classification, _event.contained_fraction, pot_weight * _event.weight_cv);
@@ -538,36 +582,6 @@ void SelectionDriver::runBDTSelectionFull() {
 
 			}
 
-			/*
-			// output details about CC Npi events
-			if (_event.classification == Utility::kCCNumuNpi) {
-				std::cout << "Passing CC Numu Npi event --- " << std::endl;
-				std::cout << "Candidate track index: " << _event.wc_pion_candidate_index << std::endl;
-				for (unsigned int wc_idx = 0; wc_idx < _event.wc_reco_Ntrack; wc_idx++) {
-
-					// skip WC pseudo-particles
-					if (_event.wc_reco_pdg[wc_idx] == 22 || _event.wc_reco_pdg[wc_idx] == 2112) continue; // skip pseudo-particles
-					// check primary
-					if (_event.wc_reco_mother[wc_idx] != 0) continue; // require WC primary track
-
-					float wc_track_length = std::sqrt(
-					std::pow(_event.wc_reco_startXYZT[wc_idx][0] - _event.wc_reco_endXYZT[wc_idx][0], 2) +
-					std::pow(_event.wc_reco_startXYZT[wc_idx][1] - _event.wc_reco_endXYZT[wc_idx][1], 2) +
-					std::pow(_event.wc_reco_startXYZT[wc_idx][2] - _event.wc_reco_endXYZT[wc_idx][2], 2) );
-
-					std::cout << "Track ID: " << wc_idx << ", truth matched classification: " << _event.wc_particle_classification_v[wc_idx]
-							  << ", WC PDG: " << _event.wc_reco_pdg[wc_idx] << ", LArPID PDG: " << _event.wc_reco_larpid_pdg[wc_idx]
-							  << ", Length: " << wc_track_length
-							  << std::endl;
-				}
-			}
-			*/
-
-			// add event to BDT training tree,
-			//if (file_types_list[idx] == Utility::kMC) {
-			//	_trainingTree.addEvent(_event, _event.classification);
-			//}
-
 			// lantern candidate particle
 			// lantern candidate topology
 			// loop over tracks
@@ -587,7 +601,7 @@ void SelectionDriver::runBDTSelectionFull() {
 					std::pow(_event.lantern_trackEndPosY[idx_track] - _event.lantern_trackStartPosY[idx_track], 2) +
 					std::pow(_event.lantern_trackEndPosZ[idx_track] - _event.lantern_trackStartPosZ[idx_track], 2) );
 				
-				if (track_length < 2) continue;
+				//if (track_length < 2) continue;
 
 				//if (_event.classification != Utility::kCCNumuNpi) continue;
 				//if (_event.classification != Utility::kNC1pi) continue;
@@ -681,11 +695,9 @@ void SelectionDriver::runBDTSelectionFull() {
 				_histStack_lantern_larpid_prmu_llr_particle.Fill(particle_class, pr_mu_llr_norm, pot_weight * _event.weight_cv);
 			}
 			// truth pion process for signal events
-			if (_event.classification == Utility::kCCNumu1pi) {
+			if (_event.classification == Utility::kNC1pi) {
 
-				//std::cout << "CC Numu 1pi Event RSE: " << _event.run << "-" << _event.sub << "-" << _event.evt << std::endl;
-
-				/*
+				double truth_pion_momentum = -1;
 				for (int i = 0; i < _event.mc_pdg_v->size(); i++) {
 					
 					// momentum
@@ -693,84 +705,25 @@ void SelectionDriver::runBDTSelectionFull() {
 													pow(_event.mc_py_v->at(i),2) + 
 													pow(_event.mc_pz_v->at(i),2) );
 
-					// muon
-					if ((_event.mc_pdg_v->at(i) == 13 || _event.mc_pdg_v->at(i) == -13)) std::cout << "Truth Muon Momentum: " << mc_momentum << std::endl;
-					if ((_event.mc_pdg_v->at(i) == 211 || _event.mc_pdg_v->at(i) == -211)) std::cout << "Truth Pion Momentum: " << mc_momentum << std::endl;
-										
+					// pion
+					//if ((_event.mc_pdg_v->at(i) == 13 || _event.mc_pdg_v->at(i) == -13)) std::cout << "Truth Muon Momentum: " << mc_momentum << std::endl;
+					if ((_event.mc_pdg_v->at(i) == 211 || _event.mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) {
+						//std::cout << "Truth Pion Momentum: " << mc_momentum << std::endl;
+						truth_pion_momentum = mc_momentum;
+					}						
 				}
-					*/
 
-				/*
-				// print out lantern reco tracks
-				std::cout << "Lantern Reco Tracks:" << std::endl;
-				for (unsigned int idx_track = 0; idx_track < _event.lantern_nTracks; idx_track++) {
-					std::cout << "Track Index: " << idx_track << ", Classified PID: " << _event.lantern_trackClassified[idx_track]
-							  << ", True PID: " << _event.lantern_trackTruePID[idx_track]
-							  << ", Start Pos: (" << _event.lantern_trackStartPosX[idx_track] << ", " << _event.lantern_trackStartPosY[idx_track] << ", " << _event.lantern_trackStartPosZ[idx_track] << ")"
-							  << ", End Pos: (" << _event.lantern_trackEndPosX[idx_track] << ", " << _event.lantern_trackEndPosY[idx_track] << ", " << _event.lantern_trackEndPosZ[idx_track] << ")"
-							  << ", Length: " << std::sqrt(
-								  std::pow(_event.lantern_trackEndPosX[idx_track] - _event.lantern_trackStartPosX[idx_track], 2) +
-								  std::pow(_event.lantern_trackEndPosY[idx_track] - _event.lantern_trackStartPosY[idx_track], 2) +
-								  std::pow(_event.lantern_trackEndPosZ[idx_track] - _event.lantern_trackStartPosZ[idx_track], 2) )
-							  << ", Mu Score: " << std::exp(_event.lantern_trackMuScore[idx_track])
-							  << ", Pi Score: " << std::exp(_event.lantern_trackPiScore[idx_track])
-							  << ", Pr Score: " << std::exp(_event.lantern_trackPrScore[idx_track])
-							  << std::endl;
-				}
-				*/
+				//std::cout << "Truth Pion Momentum: " << truth_pion_momentum << ", Reco Pion Momentum (Hypfit): " << _event.pionMomentumHypfit << ", Reco Pion Momentum (Range): " << _event.pionMomentumRange << std::endl;
 
-				// loop of truth particles, WC tree
-				// loop over truth particles
-				/*
-				for (unsigned int wc_truth_idx = 0; wc_truth_idx < _event.wc_truth_Ntrack; wc_truth_idx++) {
-					
-					// primary particles
-					if (_event.wc_truth_mother[wc_truth_idx] != 0) continue; 
-
-					// find primary pion
-					if (std::abs(_event.wc_truth_pdg[wc_truth_idx]) != 211) continue;
-
-					// check momentum
-					double momentum = std::sqrt( 	std::pow(_event.wc_truth_startMomentum[wc_truth_idx][0],2) + 
-										std::pow(_event.wc_truth_startMomentum[wc_truth_idx][1],2) + 
-										std::pow(_event.wc_truth_startMomentum[wc_truth_idx][2],2) );
-					if (momentum < 0.1) continue;
-
-					// have found primary pion
-					std::cout << "Truth Selected Pion PDG " << _event.wc_truth_pdg[wc_truth_idx] << " -- Start Process: " << _event.wc_truth_process->at(wc_truth_idx) 
-							  << ", End Process: " << _event.wc_truth_endprocess->at(wc_truth_idx) 
-							  << std::endl;
-
-					int pionID = _event.wc_truth_id[wc_truth_idx];
-					
-					PrintDaughters(_event, pionID);
-					
-
-					break;
-
+				// check hypfit, populate histograms if reasonable (for testing)
+				//if (_utility.isNumber(_event.pionMomentumHypfit) && _event.pionMomentumHypfit > 0 && _event.pionMomentumHypfit < 5) {
+				pionMomentum1D->Fill((_event.sel_pion_momentum_ - truth_pion_momentum) / truth_pion_momentum);
+				pionMomentum2D->Fill(truth_pion_momentum, _event.sel_pion_momentum_);
+				//}
 				
-				}
-				*/
 
-				/*
-				// loop of truth particles, Pandora tree
-				for (int i = 0; i < _event.mc_pdg_v->size(); i++) {
-					
-					// momentum
-					double mc_momentum = std::sqrt( pow(_event.mc_px_v->at(i),2) + 
-													pow(_event.mc_py_v->at(i),2) + 
-													pow(_event.mc_pz_v->at(i),2) );
-
-					
-						if ((_event.mc_pdg_v->at(i) == 211 || _event.mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) {
-						std::cout << "Truth Selected Pion -- Start Process: " << _event.mc_process_v->at(i) 
-								  << ", End Process: " << _event.mc_end_process_v->at(i) 
-								  << std::endl;	
-					}
-				
-				}
-				*/
-			
+				// fill resolution plots
+				pionTheta2D->Fill(_event.mc_pion_theta_, _event.sel_pion_theta_, pot_weight * _event.weight_cv);
 			}
 
 			// populate WC/Lantern candidate consistency histograms
@@ -815,7 +768,95 @@ void SelectionDriver::runBDTSelectionFull() {
 				_histStack_wc_lantern_candidate_end_distance.Fill(_event.classification, end_distance, pot_weight * _event.weight_cv);
 				_histStack_wc_lantern_candidate_angle_difference.Fill(_event.classification, angle_deg, pot_weight * _event.weight_cv);
 			}
+
+
+			// Energy Scale Tests
+			/*
+			// CC 0pi sample
+			if (_event.classification == Utility::kCCNumu0pi) {
+			
+				// get candidate track ID
+				int recoID = _event.wc_reco_id[_event.wc_pion_candidate_index];
+
+				// get spacepoints for candidate track
+				std::vector<float> spacepoints_x; spacepoints_x.reserve(1000);
+				std::vector<float> spacepoints_y; spacepoints_y.reserve(1000);
+				std::vector<float> spacepoints_z; spacepoints_z.reserve(1000);
+				std::vector<float> spacepoints_q; spacepoints_q.reserve(1000);
+
+				for (int i = 0; i < _event.wc_Trecchargeblob_spacepoints_real_cluster_id->size(); i++) {
+					if (_event.wc_Trecchargeblob_spacepoints_real_cluster_id->at(i) == recoID) {
+						spacepoints_x.push_back(_event.wc_Trecchargeblob_spacepoints_x->at(i));
+						spacepoints_y.push_back(_event.wc_Trecchargeblob_spacepoints_y->at(i));
+						spacepoints_z.push_back(_event.wc_Trecchargeblob_spacepoints_z->at(i));
+						spacepoints_q.push_back(_event.wc_Trecchargeblob_spacepoints_q->at(i));
+					}
+				}
+
+				// check number of spacepoints for candidate, if zero return zero momentum (error case)
+				int n_spacepoints = spacepoints_x.size();
+				if (n_spacepoints == 0) {
+					std::cout << "Error: no spacepoints found for candidate track!" << std::endl;
+					continue;
+				}
+
+				// check whether first space point is start or end of track, by comparing to track start and end positions
+				double start_dist = std::sqrt(std::pow(spacepoints_x.at(0) - _event.wc_reco_startXYZT[_event.wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(0) - _event.wc_reco_startXYZT[_event.wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(0) - _event.wc_reco_startXYZT[_event.wc_pion_candidate_index][2], 2));
+				double end_dist = std::sqrt(std::pow(spacepoints_x.at(0) - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(0) - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(0) - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][2], 2));
+				// reverse if filled backwards
+				if (end_dist < start_dist) {
+					//std::cout << "Reversing spacepoint order for candidate track..." << std::endl;
+					std::reverse(spacepoints_x.begin(), spacepoints_x.end());
+					std::reverse(spacepoints_y.begin(), spacepoints_y.end());
+					std::reverse(spacepoints_z.begin(), spacepoints_z.end());
+					std::reverse(spacepoints_q.begin(), spacepoints_q.end());
+				}
+		
+				// calculate dx, dq, and dE for each spacepoint
+				std::vector<double> dx; dx.reserve(n_spacepoints-1);
+				std::vector<double> rr; rr.reserve(n_spacepoints-1);
+				std::vector<double> dqdx; dqdx.reserve(n_spacepoints-1);
+				std::vector<double> dEdx; dEdx.reserve(n_spacepoints-1);
+
+				// WC values (???), unclear where these come from
+				//double alpha = 1.0; 
+				//double beta = 0.255;
+				// Standard values
+				double alpha = 0.93;
+				double beta = 0.212;
+
+				for (int i = 1; i < n_spacepoints; i++) {
+
+					double sp_dx = std::sqrt(std::pow(spacepoints_x.at(i) - spacepoints_x.at(i-1), 2) + std::pow(spacepoints_y.at(i) - spacepoints_y.at(i-1), 2) + std::pow(spacepoints_z.at(i) - spacepoints_z.at(i-1), 2));
+					double sp_q = spacepoints_q.at(i);
+					double sp_dQ = (sp_q + 1000) * 10; // this is correct
+					double sp_dQdx = sp_dQ / sp_dx;
+					if (sp_dQdx/43e3 > 1000) sp_dQdx = 0;
+
+					// convert to dE/dx
+					// proper way
+					double sp_dEdx = (std::exp(sp_dQdx * 23.6e-6*beta/1.38/0.273) - alpha)/(beta/1.38/0.273);
+					if (sp_dEdx < 0) sp_dEdx = 0;
+					if (sp_dEdx > 50) sp_dEdx = 50;
+					
+					// is there an energy scaling needed? Yes, ~1.2 factor shifts dE/dx 
+					// dE/dx seems low -- to be investigated.
+					sp_dEdx *= 1.2;					
+					
+					dx.push_back(sp_dx);
+					dEdx.push_back(sp_dEdx);
+
+					// calcuate rr, looping over remaining spacepoints to get total range
+					// alternative - just use track end position to calculate rr
+					double sp_rr = std::sqrt(std::pow(spacepoints_x.at(i) - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(i) - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(i) - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][2], 2));
+					rr.push_back(sp_rr);
+
+					// fill histogram
+					dEdx_vs_ResRange->Fill(sp_rr, sp_dEdx);
+				}
 				
+			}
+			*/
 		}
 
 		// clean up
@@ -864,6 +905,7 @@ void SelectionDriver::runBDTSelectionFull() {
 	std::cout << "Purity: " << (n_signal_pass / n_total_pass) * 100 << std::endl;
 	
 	// draw histograms
+
 	TCanvas *c1 = new TCanvas("c1", "c1", 1080, 1080);
   	_histStack_contained_fraction.DrawStack(c1, Utility::kSingleBin);
   	c1->Print("plots/plot_contained_fraction.root");
@@ -991,6 +1033,17 @@ void SelectionDriver::runBDTSelectionFull() {
 	_histStack_wc_reco_larpid_procScore_ntrl.DrawStack(wc11, Utility::kLArPID_ntrl);
   	wc11->Print("plots/plot_wc_reco_larpid_procScore_ntrl.root");
 
+	// observables
+	TCanvas *o1 = new TCanvas("o1", "o1", 1080, 1080);
+  	o1->cd();
+  	_histStack_sel_pion_theta.DrawStack(o1, Utility::kTheta);
+  	o1->Print("plots/plot_pion_theta.root");
+
+	TCanvas *o2 = new TCanvas("o2", "o2", 1080, 1080);
+  	o2->cd();
+  	_histStack_sel_pion_phi.DrawStack(o2, Utility::kPhi);
+  	o2->Print("plots/plot_pion_phi.root");
+
 	// lantern
 	TCanvas *l1 = new TCanvas("l1", "l1", 1080, 1080);
 	_histStack_lantern_vtxScore.DrawStack(l1, Utility::kLanternVtxScore);
@@ -1052,6 +1105,59 @@ void SelectionDriver::runBDTSelectionFull() {
 	_histStack_wc_lantern_candidate_angle_difference.DrawStack(l12, Utility::kOpeningAngle);
   	l12->Print("plots/plot_wc_lantern_candidate_angle_difference.root");
 
+	// draw resolution plots
+	TCanvas *res1 = new TCanvas("res1", "res1", 1080, 1080);
+	res1->cd();
+	pionMomentum1D->GetXaxis()->SetTitle("Pion Momentum ((Reco - True) / True)");
+	pionMomentum1D->Draw("HIST");
+  	res1->Print("plots/plot_pion_momentum_resolution_1D.root");
+	
+	TCanvas *res2 = new TCanvas("res2", "res2", 1080, 1080);
+	res2->cd();
+	pionMomentum2D->GetXaxis()->SetTitle("True Pion Momentum [GeV/c]");
+    pionMomentum2D->GetYaxis()->SetTitle("Reconstructed Pion Momentum [GeV/c]");
+	pionMomentum2D->Draw("COLZ");
+  	res2->Print("plots/plot_pion_momentum_resolution_2D.root");	
+
+	TCanvas *res3 = new TCanvas("res3", "res3", 1080, 1080);
+	res3->cd();
+	pionTheta2D->GetXaxis()->SetTitle("True Pion cos(#theta)");
+	pionTheta2D->GetYaxis()->SetTitle("Reconstructed Pion cos(#theta)");
+	pionTheta2D->Draw("COLZ");
+  	res3->Print("plots/plot_pion_theta_resolution_2D.root");
+
+	// draw dE/dx vs residual range plot
+	TCanvas *res4 = new TCanvas("res4", "res4", 1080, 1080);
+	res4->cd();
+	dEdx_vs_ResRange->GetXaxis()->SetTitle("Residual Range [cm]");
+	dEdx_vs_ResRange->GetYaxis()->SetTitle("dE/dx [MeV/cm]");
+	dEdx_vs_ResRange->Draw("COLZ");
+
+	// create theoretical prediction
+	std::vector<double> rr_vals;
+	std::vector<double> mpv_dedx_vals;
+
+	double pitch = 0.6; // cm
+
+	for (int i = 0; i < 330; i++) {
+		double rr = i*pitch;
+		double KE = _physdedx.KEFromRangeSpline(rr);
+		double mpv_dedx = _physdedx.MPVdEdx(KE, pitch);
+
+		rr_vals.push_back(rr);
+		mpv_dedx_vals.push_back(mpv_dedx);
+
+	}
+
+	// draw as TGraph
+	TGraph *graph = new TGraph(mpv_dedx_vals.size(), &rr_vals[0], &mpv_dedx_vals[0]);
+	graph->SetLineColor(kBlack);
+	graph->SetLineStyle(9);
+	graph->SetLineWidth(3);
+	graph->Draw("L same");
+
+	res4->Print("plots/plot_dEdx_vs_ResRange.root");
+	
 	// WC LArPID per particle
 	TCanvas *wc_p1 = new TCanvas("wc_p1", "wc_p1", 1080, 1080);
   	wc_p1->cd();

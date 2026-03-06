@@ -92,6 +92,9 @@ EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc
 	lantern_tree->SetBranchAddress("trackEndPosX", lantern_trackEndPosX);
 	lantern_tree->SetBranchAddress("trackEndPosY", lantern_trackEndPosY);
 	lantern_tree->SetBranchAddress("trackEndPosZ", lantern_trackEndPosZ);
+	lantern_tree->SetBranchAddress("trackStartDirX", lantern_trackStartDirX);
+	lantern_tree->SetBranchAddress("trackStartDirY", lantern_trackStartDirY);
+	lantern_tree->SetBranchAddress("trackStartDirZ", lantern_trackStartDirZ);
 
 	lantern_tree->SetBranchAddress("trackClassified", lantern_trackClassified);
 	lantern_tree->SetBranchAddress("trackPID", lantern_trackPID);
@@ -964,6 +967,11 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
 	sel_LanternPID_llr_mu_pi_ = -2;
 	sel_LanternPID_llr_pr_pi_ = -2;
 
+	sel_CC0piFarSideband_ = false;
+    sel_CC0piNearSideband_ = false;
+	sel_CC1piSideband_ = false;
+	sel_NCNpSideband_ = false;
+
 	// fraction of hits associated with tracks or showers
 	associated_hits_fraction = ((float)trk_hits_y_tot + (float)shr_hits_y_tot) / (float)total_hits_y;
 	
@@ -1594,6 +1602,14 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
 
 	//std::cout << "Here 1f" << std::endl;
 
+	// reset observables
+	mc_pion_theta_ = -9999;
+	mc_pion_phi_ = -9999;
+	mc_pion_momentum_ = -9999;
+	sel_pion_theta_ = -9999;
+	sel_pion_phi_ = -9999;
+	sel_pion_momentum_ = -9999;
+
 }
 
 // get shower dE/dx on plane with the most hits
@@ -1854,17 +1870,114 @@ float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
 			spacepoints_q.push_back(wc_Trecchargeblob_spacepoints_q->at(i));
 		}
 	}
+
+	// check number of spacepoints for candidate, if zero return zero momentum (error case)
+	int n_spacepoints = spacepoints_x.size();
+	if (n_spacepoints == 0) {
+		std::cout << "Error: no spacepoints found for candidate track!" << std::endl;
+		return 0;
+	}
+
+	// print candidate start and end positions, using track reconstruction variables (should be consistent with spacepoint positions)
+	//std::cout << "Candidate track start position: (" << wc_reco_startXYZT[wc_pion_candidate_index][0] << ", " << wc_reco_startXYZT[wc_pion_candidate_index][1] << ", " << wc_reco_startXYZT[wc_pion_candidate_index][2] << ")" << std::endl;
+	//std::cout << "Candidate track end position: (" << wc_reco_endXYZT[wc_pion_candidate_index][0] << ", " << wc_reco_endXYZT[wc_pion_candidate_index][1] << ", " << wc_reco_endXYZT[wc_pion_candidate_index][2] << ")" << std::endl;
 	
-	//std::cout << "Number of spacepoints for candidate track: " << spacepoints_x.size() << std::endl;
+
+	// print first spacepoint position
+	//std::cout << "Original First spacepoint position: (" << spacepoints_x.at(0) << ", " << spacepoints_y.at(0) << ", " << spacepoints_z.at(0) << ")" << std::endl;
+
+	// check whether first space point is start or end of track, by comparing to track start and end positions
+	double start_dist = std::sqrt(std::pow(spacepoints_x.at(0) - wc_reco_startXYZT[wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(0) - wc_reco_startXYZT[wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(0) - wc_reco_startXYZT[wc_pion_candidate_index][2], 2));
+	double end_dist = std::sqrt(std::pow(spacepoints_x.at(0) - wc_reco_endXYZT[wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(0) - wc_reco_endXYZT[wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(0) - wc_reco_endXYZT[wc_pion_candidate_index][2], 2));
+	// reverse if filled backwards
+	//std::cout << "start_dist = " << start_dist << ", end_dist = " << end_dist << std::endl;
+	if (end_dist < start_dist) {
+		//std::cout << "Reversing spacepoint order for candidate track..." << std::endl;
+		std::reverse(spacepoints_x.begin(), spacepoints_x.end());
+		std::reverse(spacepoints_y.begin(), spacepoints_y.end());
+		std::reverse(spacepoints_z.begin(), spacepoints_z.end());
+		std::reverse(spacepoints_q.begin(), spacepoints_q.end());
+	}
+	else {
+		//std::cout << "Spacepoint order for candidate track is correct." << std::endl;
+	}
+	
+	//std::cout << "Fixed First spacepoint position: (" << spacepoints_x.at(0) << ", " << spacepoints_y.at(0) << ", " << spacepoints_z.at(0) << ")" << std::endl;
 
 
+	// calculate dx, dq, and dE for each spacepoint
+	std::vector<double> dx; dx.reserve(n_spacepoints-1);
+	std::vector<double> rr; rr.reserve(n_spacepoints-1);
+	std::vector<double> dqdx; dqdx.reserve(n_spacepoints-1);
+	std::vector<double> dEdx; dEdx.reserve(n_spacepoints-1);
 
-	//double pion_likelihood_KE = hypfit->Likelihood(test_dedx, test_rr, 211);
-	//double pion_gaus_KE = hypfit->Gaussian(test_dedx, test_rr, 211);
-	//std::cout << "pion_likelihood_KE: " << pion_likelihood_KE << std::endl;
-	//std::cout << "pion_gaus_KE: " << pion_gaus_KE << std::endl;
+	// WC values (???), unclear where these come from
+	//double alpha = 1.0; 
+	//double beta = 0.255;
+	// Standard values
+	double alpha = 0.93;
+	double beta = 0.212;
 
-	return 0;
+	for (int i = 1; i < n_spacepoints; i++) {
+
+		double sp_dx = std::sqrt(std::pow(spacepoints_x.at(i) - spacepoints_x.at(i-1), 2) + std::pow(spacepoints_y.at(i) - spacepoints_y.at(i-1), 2) + std::pow(spacepoints_z.at(i) - spacepoints_z.at(i-1), 2));
+		double sp_q = spacepoints_q.at(i);// + spacepoints_q.at(i-1);
+		double sp_dQ = (sp_q + 1000) * 10; // this is correct
+		double sp_dQdx = sp_dQ / sp_dx;
+		if (sp_dQdx/43e3 > 1000) sp_dQdx = 0;
+
+		// convert to dE/dx
+		// proper way
+		double sp_dEdx = (std::exp(sp_dQdx * 23.6e-6*beta/1.38/0.273) - alpha)/(beta/1.38/0.273);
+		if (sp_dEdx < 0) sp_dEdx = 0;
+		if (sp_dEdx > 50) sp_dEdx = 50;
+		
+		// is there an energy scaling needed?
+		// dE/dx seems low -- to be investigated.
+		sp_dEdx *= 1.2;
+
+		// to MIP units
+		/*
+		double sp_dEdx = sp_dQdx / 43e3;
+		// convert to MeV/cm
+		sp_dEdx = sp_dEdx * 2.2; // to be tuned to MIP dE/dx expected in Sungbin's code
+		*/
+		
+		dx.push_back(sp_dx);
+		dEdx.push_back(sp_dEdx);
+
+		// calcuate rr, looping over remaining spacepoints to get total range
+		/*
+		double sp_rr = 0;
+		for (int j = i; j < n_spacepoints; j++) {
+			sp_rr += std::sqrt(std::pow(spacepoints_x.at(j) - spacepoints_x.at(j-1), 2) + std::pow(spacepoints_y.at(j) - spacepoints_y.at(j-1), 2) + std::pow(spacepoints_z.at(j) - spacepoints_z.at(j-1), 2));
+		}
+		*/
+		// alternative - just use track end position to calculate rr
+		double sp_rr = std::sqrt(std::pow(spacepoints_x.at(i) - wc_reco_endXYZT[wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(i) - wc_reco_endXYZT[wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(i) - wc_reco_endXYZT[wc_pion_candidate_index][2], 2));
+		rr.push_back(sp_rr);
+
+		//std::cout << "Spacepoint " << i << ": dx = " << sp_dx << " cm, dEdx = "  <<  sp_dEdx << " MeV/cm, rr = " << sp_rr << " cm" << std::endl;
+	}
+
+	// reverse dE/dx and rr vectors as needed for hyfit
+	std::reverse(dEdx.begin(), dEdx.end());
+	std::reverse(rr.begin(), rr.end());
+
+	// perform fit
+	//std::cout << "Performing fit..." << std::endl;
+	double pion_likelihood_p = hypfit->Likelihood(dEdx, rr, 211);
+	//double pion_gaus_KE = hypfit->Gaussian(dEdx, rr, 211);
+
+
+	//std::cout << "pion_likelihood_KE: " << pion_likelihood_KE << ", pion_likelihood_p: " << pion_likelihood_p << std::endl;
+	//std::cout << "pion_gaus_KE: " << pion_gaus_KE << ", pion_gaus_p: " << pion_gaus_p << std::endl;
+
+	// print truth pion KE
+	//std::cout << "Truth pion KE: " << wc_true_pion_KE << " GeV" << std::endl;
+	
+	return pion_likelihood_p;
+	//return 1.0;
 }
 
 // shower track end proximity

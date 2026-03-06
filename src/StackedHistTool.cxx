@@ -786,6 +786,12 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
   case Utility::kLanternVtxFracHitsOnCosmic:
     returnString = "Lantern Vertex Fraction Cosmic Hits";
     break;
+  case Utility::kTheta:
+    returnString = "Pion cos(#theta)";
+    break;
+  case Utility::kPhi:
+    returnString = "Pion #phi [deg]";
+    break;
   
   default:
     std::cout << "[ERROR: StackedHistTool] Could not find string conversion for enum " << plotvariable << std::endl;

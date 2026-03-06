@@ -149,20 +149,6 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 		
 		}
 	}
-	
-	// require exactly one muon or pion track
-	if (n_lantern_larpid_mu + n_lantern_larpid_pi != 1) return false;
-
-	// no unclassified particles
-	if (n_lantern_larpid_unclassified != 0) return false;
-
-	// sanity check, should only be one candidate at this point
-	if (lantern_pion_candidate_indices.size() != 1) {
-		std::cout << "Warning: more than one pion candidate found! Logic issue." << std::endl;
-		return false;
-	}
-	// save pion candidate index
-	_evt.lantern_pion_candidate_index = lantern_pion_candidate_indices[0];
 
 	// WC cross-check 
 	// count primary particles as classified by WC
@@ -216,13 +202,31 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 
 	}
 
-	// Classical WC Selection
+	// Apply Selection PID Cuts
+	// Lantern
+	// no unclassified particles
+	if (n_lantern_larpid_unclassified != 0) return false;
+
+	// WC
 	// reject events with WC identified primary shower
 	if (n_wc_reco_el > 0) return false; // reject events with primary shower
 
-	// require one and only one WC identified muon or pion
-	if (n_wc_reco_mu + n_wc_reco_pi != 1) return false; // require at least one muon or pion
+	// NC 0pi Sideband: no muon or pion tracks in WC or Lantern
+	if (n_lantern_larpid_mu + n_lantern_larpid_pi == 0 && n_wc_reco_mu + n_wc_reco_pi == 0) {
+		_evt.sel_NCNpSideband_ = true;
+	}
+	
+	// CC 1pi Sideband: WC + Lantern
+	if ( (n_lantern_larpid_mu + n_lantern_larpid_pi)  == 2  && n_wc_reco_mu + n_wc_reco_pi == 2) {
+		_evt.sel_CC1piSideband_ = true;
+	}
 
+	// apply actual selection: require exactly one muon or pion track
+	// Lantern	
+	if (n_lantern_larpid_mu + n_lantern_larpid_pi != 1) return false;
+	_evt.lantern_pion_candidate_index = lantern_pion_candidate_indices[0];
+	// WC		
+	if (n_wc_reco_mu + n_wc_reco_pi != 1) return false; // require at least one muon or pion
 	_evt.wc_pion_candidate_index = wc_pion_candidate_indices_classical[0];
 
 	// Consistency check between WC and Lantern candidate
@@ -272,12 +276,17 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	_evt.sel_LanternPID_llr_mu_pi_ = mu_pi_llr_norm;
 	_evt.sel_LanternPID_llr_pr_pi_ = pr_pi_llr_norm;
 
-	// require pion candidate to have mu/pi LLR < 0.4 (muon-like rejected)
+	// create two sidebands: near and far CC 0pi
+	if (mu_pi_llr_norm < 0.0) _evt.sel_CC0piFarSideband_= true;
+	else if (mu_pi_llr_norm > 0.0 && mu_pi_llr_norm < 0.5) _evt.sel_CC0piNearSideband_= true;
+	
+	// require pion candidate to have mu/pi LLR < 0.5 (muon-like rejected)
 	if (mu_pi_llr_norm < 0.5) return false;
-
 	_evt.sel_passMuPiLLR_= true;
 
+	// no longer including additional LArPID cuts in selection to reduce sensitvity to performance / overtuning.
 	// require pion candidate to have pr/pi LLR < 0.4 (proton-like rejected)
+	/*
 	//if (pr_pi_llr_norm < 0.5) return false;
 	
 	// LArPID cuts	
@@ -313,6 +322,15 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	}
 
 	//if (nSecondMuonPion != 0) return false;
+	*/
+
+	// require candidate WC track longer than 20 cm (for momentum calculation)
+	
+	
+	//if (wc_candidate_track_length < 10) return false; // require candidate WC track longer than 20 cm
+
+	// set selected pion variables
+    setSelectedPionInformation(_evt);
 
 	_evt.sel_NC1pi_ = true;
 
@@ -1143,65 +1161,57 @@ int Selection::CountProtons(EventContainer &_evt, Utility::RunPeriodEnums runPer
 
 void Selection::setSelectedPionInformation(EventContainer &_evt) {
 
-    // loose
-    if (_evt.primaryTrackPionlikeLoose) {
-    	_evt.trk_bragg_mip_pion_loose = _evt.trk_bragg_mip_max;
-     	_evt.trk_daughters_pion_loose = _evt.trk_daughters;
-    	_evt.trk_dEdx_trunk_pion_loose = _evt.trk_dEdx_trunk_max;
-    	_evt.trk_bragg_pion_pion_loose = _evt.trk_bragg_pion_max;
-    	_evt.trk_llr_pid_score_pion_loose = _evt.trk_llr_pid_score;
-    	_evt.trk_score_pion_loose = _evt.trk_score;
-    	_evt.trk_end_spacepoints_pion_loose = _evt.trk_end_spacepoints;
-    }
-    else if (_evt.secondaryTrackPionlikeLoose) {
-    	_evt.trk_bragg_mip_pion_loose = _evt.trk2_bragg_mip_max;
-     	_evt.trk_daughters_pion_loose = _evt.trk2_daughters;
-    	_evt.trk_dEdx_trunk_pion_loose = _evt.trk2_dEdx_trunk_max;
-    	_evt.trk_bragg_pion_pion_loose = _evt.trk2_bragg_pion_max;
-    	_evt.trk_llr_pid_score_pion_loose = _evt.trk2_llr_pid_score;
-    	_evt.trk_score_pion_loose = _evt.trk2_score;
-    	_evt.trk_end_spacepoints_pion_loose = _evt.trk2_end_spacepoints;
-    }
-    else {
-    	_evt.trk_bragg_mip_pion_loose = _evt.trk3_bragg_mip_max;
-     	_evt.trk_daughters_pion_loose = _evt.trk3_daughters;
-    	_evt.trk_dEdx_trunk_pion_loose = _evt.trk3_dEdx_trunk_max;
-    	_evt.trk_bragg_pion_pion_loose = _evt.trk3_bragg_pion_max;
-    	_evt.trk_llr_pid_score_pion_loose = _evt.trk3_llr_pid_score;
-    	_evt.trk_score_pion_loose = _evt.trk3_score;
-    	_evt.trk_end_spacepoints_pion_loose = _evt.trk3_end_spacepoints;
-    }
+	// Truth (Signal)
+	if (_evt.classification == Utility::kNC1pi) {
 
-    // full
-    if (_evt.primaryTrackPionlike) {
-    	_evt.trk_bragg_mip_pion = _evt.trk_bragg_mip_max;
-     	_evt.trk_daughters_pion = _evt.trk_daughters;
-    	_evt.trk_dEdx_trunk_pion = _evt.trk_dEdx_trunk_max;
-    	_evt.trk_bragg_pion_pion = _evt.trk_bragg_pion_max;
-    	_evt.trk_llr_pid_score_pion = _evt.trk_llr_pid_score;
-    	_evt.trk_score_pion = _evt.trk_score;
-    	_evt.trk_end_spacepoints_pion = _evt.trk_end_spacepoints;
-    	_evt.reco_momentum_pion = _evt.trk_momentum_pion;
-    }
-    else if (_evt.secondaryTrackPionlike) {
-    	_evt.trk_bragg_mip_pion = _evt.trk2_bragg_mip_max;
-     	_evt.trk_daughters_pion = _evt.trk2_daughters;
-    	_evt.trk_dEdx_trunk_pion = _evt.trk2_dEdx_trunk_max;
-    	_evt.trk_bragg_pion_pion = _evt.trk2_bragg_pion_max;
-    	_evt.trk_llr_pid_score_pion = _evt.trk2_llr_pid_score;
-    	_evt.trk_score_pion = _evt.trk2_score;
-    	_evt.trk_end_spacepoints_pion = _evt.trk2_end_spacepoints;
-    	_evt.reco_momentum_pion = _evt.trk2_momentum_pion;
+		// find true pion, matching signal thresholds (pion with momentum > 100 MeV)
+		int truth_pion_index = -1;
+		double truth_pion_momentum = -1;
+		for (int i = 0; i < _evt.mc_pdg_v->size(); i++) {
+			
+			// momentum
+			double mc_momentum = std::sqrt( pow(_evt.mc_px_v->at(i),2) + 
+											pow(_evt.mc_py_v->at(i),2) + 
+											pow(_evt.mc_pz_v->at(i),2) );
+
+			// pion
+			if ((_evt.mc_pdg_v->at(i) == 211 || _evt.mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) {
+				truth_pion_index = i;
+				truth_pion_momentum = mc_momentum;
+				break;
+			}						
+		}
+
+		// truth momentum
+		_evt.mc_pion_momentum_ = truth_pion_momentum;
+
+		// truth angles
+		_evt.mc_pion_theta_ = _evt.mc_pz_v->at(truth_pion_index) / truth_pion_momentum;
+		_evt.mc_pion_phi_ = std::atan2(_evt.mc_py_v->at(truth_pion_index), _evt.mc_px_v->at(truth_pion_index));
 	}
-	else {
-		_evt.trk_bragg_mip_pion = _evt.trk3_bragg_mip_max;
-     	_evt.trk_daughters_pion = _evt.trk3_daughters;
-    	_evt.trk_dEdx_trunk_pion = _evt.trk3_dEdx_trunk_max;
-    	_evt.trk_bragg_pion_pion = _evt.trk3_bragg_pion_max;
-    	_evt.trk_llr_pid_score_pion = _evt.trk3_llr_pid_score;
-    	_evt.trk_score_pion = _evt.trk3_score;
-    	_evt.trk_end_spacepoints_pion = _evt.trk3_end_spacepoints;
-    	_evt.reco_momentum_pion = _evt.trk3_momentum_pion;
+
+	// Reconstructed (Selected)
+	// momentum
+	// calculate pion momentum for candidate track -- hypfit, using WC track
+	_evt.pionMomentumHypfit = _evt.CalculatePionMomentumHypfit(_evt.wc_pion_candidate_index)/1000;
+	// by range
+	float wc_candidate_track_length = std::sqrt(
+	std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][0] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][0], 2) +
+	std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][1] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][1], 2) +
+	std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][2] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][2], 2) );
+	_evt.pionMomentumRange = _evt.CalculatePionMomentumRange(wc_candidate_track_length);
+	
+	// check whether hypfit momentum is reasonable, otherwise use range-based momentum
+	if (_utility.isNumber(_evt.pionMomentumHypfit) && _evt.pionMomentumHypfit > 0 && _evt.pionMomentumHypfit < 5) {
+		_evt.sel_pion_momentum_ = _evt.pionMomentumHypfit;
 	}
+	else _evt.sel_pion_momentum_ = _evt.pionMomentumRange;
+
+	// theta
+	_evt.sel_pion_theta_ = _evt.lantern_trackStartDirZ[_evt.lantern_pion_candidate_index];
+
+	// phi
+	_evt.sel_pion_phi_ = std::atan2(_evt.lantern_trackStartDirY[_evt.lantern_pion_candidate_index], _evt.lantern_trackStartDirX[_evt.lantern_pion_candidate_index]);
+    
 }
 

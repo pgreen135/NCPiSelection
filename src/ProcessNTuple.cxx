@@ -197,70 +197,28 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	set_output_branch_address( out_tree, "sel_passInitialSelection", &ev.sel_passInitialSelection_, create, "sel_passInitialSelection/O");
 	set_output_branch_address( out_tree, "sel_passMuPiLLR", &ev.sel_passMuPiLLR_, create, "sel_passMuPiLLR/O");
 	set_output_branch_address( out_tree, "sel_NC1pi", &ev.sel_NC1pi_, create, "sel_NC1pi/O");
+	set_output_branch_address( out_tree, "sel_CC0piFarSideband", &ev.sel_CC0piFarSideband_, create, "sel_CC0piFarSideband/O");
+	set_output_branch_address( out_tree, "sel_CC0piNearSideband", &ev.sel_CC0piNearSideband_, create, "sel_CC0piNearSideband/O");
+	set_output_branch_address( out_tree, "sel_CC1piSideband", &ev.sel_CC1piSideband_, create, "sel_CC1piSideband/O");
+	set_output_branch_address( out_tree, "sel_NCNpSideband", &ev.sel_NCNpSideband_, create, "sel_NCNpSideband/O");
 
 	// Observables
 	// LLR PID Scores
 	set_output_branch_address( out_tree, "sel_LanternPID_llr_mu_pi", &ev.sel_LanternPID_llr_mu_pi_, create, "sel_LanternPID_llr_mu_pi/F");	// Reco
 	set_output_branch_address( out_tree, "sel_LanternPID_llr_pr_pi", &ev.sel_LanternPID_llr_pr_pi_, create, "sel_LanternPID_llr_pr_pi/F");	// Reco
 
-	// Shower/Electron energy
-	//set_output_branch_address( out_tree, "sel_shr_energy_cali", &ev.shr_energy_cali, create, "sel_shr_energy_cali/F");	// Reco
-	//set_output_branch_address( out_tree, "mc_shr_bkt_E", &ev.shr_bkt_E, create, "mc_shr_bkt_E/F");						// Truth - shower energy
-	//set_output_branch_address( out_tree, "mc_elec_e", &ev.elec_e, create, "mc_elec_e/F");										// Truth - electron energy
+	// Pion angle and momentum
+	set_output_branch_address( out_tree, "sel_pion_theta", &ev.sel_pion_theta_, create, "sel_pion_theta/F");
+	set_output_branch_address( out_tree, "sel_pion_phi", &ev.sel_pion_phi_, create, "sel_pion_phi/F");
+	set_output_branch_address( out_tree, "sel_pion_momentum", &ev.sel_pion_momentum_, create, "sel_pion_momentum/F");
+	
+	set_output_branch_address( out_tree, "mc_pion_theta", &ev.mc_pion_theta_, create, "mc_pion_theta/F");
+	set_output_branch_address( out_tree, "mc_pion_phi", &ev.mc_pion_phi_, create, "mc_pion_phi/F");
+	set_output_branch_address( out_tree, "mc_pion_momentum", &ev.mc_pion_momentum_, create, "mc_pion_momentum/F");
 
-	// Electron NuMI angle (beta)
-	//set_output_branch_address( out_tree, "sel_reco_cos_electron_effective_angle", &ev.reco_cos_electron_effective_angle, create, "sel_reco_cos_electron_effective_angle/F");	// Reco
-	//set_output_branch_address( out_tree, "mc_true_cos_electron_effective_angle", &ev.true_cos_electron_effective_angle, create, "mc_true_cos_electron_effective_angle/F");		// Truth
-
-	// Pion Momentum
-	//set_output_branch_address( out_tree, "sel_reco_momentum_pion", &ev.reco_momentum_pion, create, "sel_reco_momentum_pion/F");	// Reco - range-based
-	//set_output_branch_address( out_tree, "mc_pion_p", &ev.pion_p, create, "mc_pion_p/F");											// Truth - pion energy
-
-	// Pion NuMI angle (beta)
-	//set_output_branch_address( out_tree, "sel_reco_cos_pion_effective_angle", &ev.reco_cos_pion_effective_angle, create, "sel_reco_cos_pion_effective_angle/F");	// Reco
-	//set_output_branch_address( out_tree, "mc_true_cos_pion_effective_angle", &ev.true_cos_pion_effective_angle, create, "mc_true_cos_pion_effective_angle/F");		// Truth
-
-	// Opening angle
-	//set_output_branch_address( out_tree, "sel_reco_cos_electron_pion_opening_angle", &ev.reco_cos_electron_pion_opening_angle, create, "sel_reco_cos_electron_pion_opening_angle/F");	// Reco
-	//set_output_branch_address( out_tree, "mc_true_cos_electron_pion_opening_angle", &ev.true_cos_electron_pion_opening_angle, create, "mc_true_cos_electron_pion_opening_angle/F");		// Truth
-
-	// Number protons
-	//set_output_branch_address( out_tree, "sel_numberProtons", &ev.numberProtons, create, "sel_numberProtons/I");	// Reco
-	//set_output_branch_address( out_tree, "mc_nproton", &ev.nproton, create, "mc_nproton/I");											// Truth
-
-	/*
-	// Track BDT properties
-	set_output_branch_address( out_tree, "sel_bragg_mip_pion_loose", &ev.trk_bragg_mip_pion_loose, create, "sel_bragg_mip_pion_loose/F");
-	set_output_branch_address( out_tree, "sel_trk_daughters_pion_loose", &ev.trk_daughters_pion_loose, create, "sel_trk_daughters_pion_loose/I");
-	set_output_branch_address( out_tree, "sel_trk_dEdx_trunk_pion_loose", &ev.trk_dEdx_trunk_pion_loose, create, "sel_trk_dEdx_trunk_pion_loose/F");
-	set_output_branch_address( out_tree, "sel_trk_bragg_pion_pion_loose", &ev.trk_bragg_pion_pion_loose, create, "sel_trk_bragg_pion_pion_loose/F");
-	set_output_branch_address( out_tree, "sel_trk_llr_pid_score_pion_loose", &ev.trk_llr_pid_score_pion_loose, create, "sel_trk_llr_pid_score_pion_loose/F");
-	set_output_branch_address( out_tree, "sel_trk_score_pion_loose", &ev.trk_score_pion_loose, create, "sel_trk_score_pion_loose/F");
-	set_output_branch_address( out_tree, "sel_trk_end_spacepoints_pion_loose", &ev.trk_end_spacepoints_pion_loose, create, "sel_trk_end_spacepoints_pion_loose/I");
-
-	set_output_branch_address( out_tree, "sel_bragg_mip_pion", &ev.trk_bragg_mip_pion, create, "sel_bragg_mip_pion/F");
-	set_output_branch_address( out_tree, "sel_trk_daughters_pion", &ev.trk_daughters_pion, create, "sel_trk_daughters_pion/I");
-	set_output_branch_address( out_tree, "sel_trk_dEdx_trunk_pion", &ev.trk_dEdx_trunk_pion, create, "sel_trk_dEdx_trunk_pion/F");
-	set_output_branch_address( out_tree, "sel_trk_bragg_pion_pion", &ev.trk_bragg_pion_pion, create, "sel_trk_bragg_pion_pion/F");
-	set_output_branch_address( out_tree, "sel_trk_llr_pid_score_pion", &ev.trk_llr_pid_score_pion, create, "sel_trk_llr_pid_score_pion/F");
-	set_output_branch_address( out_tree, "sel_trk_score_pion", &ev.trk_score_pion, create, "sel_trk_score_pion/F");
-	set_output_branch_address( out_tree, "sel_trk_end_spacepoints_pion", &ev.trk_end_spacepoints_pion, create, "sel_trk_end_spacepoints_pion/I");
-
-	// Shower BDT properties
-	set_output_branch_address(out_tree,  "sel_n_showers_contained", &ev.n_showers_contained, create, "sel_n_showers_contained/I");
-	set_output_branch_address( out_tree, "sel_shrmoliereavg", &ev.shrmoliereavg, create, "sel_shrmoliereavg/F");
-	set_output_branch_address( out_tree, "sel_shr_distance", &ev.shr_distance, create, "sel_shr_distance/F");
-	set_output_branch_address( out_tree, "sel_shr2_pfpgeneration", &ev.shr2_pfpgeneration, create, "sel_shr2_pfpgeneration/I");
-	set_output_branch_address( out_tree, "sel_shr_trkfit_2cm_dedx_best", &ev.shr_trkfit_2cm_dedx_max, create, "sel_shr_trkfit_2cm_dedx_best/F");
-	set_output_branch_address( out_tree, "sel_shr_trkfit_gap10_dedx_best", &ev.shr_trkfit_gap10_dedx_max, create, "sel_shr_trkfit_gap10_dedx_best/F");
-	set_output_branch_address( out_tree, "sel_shr_energyFraction", &ev.shr_energyFraction, create, "sel_shr_energyFraction/F");
-	set_output_branch_address( out_tree, "sel_shr2_distance", &ev.shr2_distance, create, "sel_shr2_distance/F");
-  set_output_branch_address( out_tree, "sel_shrMCSMom", &ev.shrMCSMom, create, "sel_shrMCSMom/F");
-  */
-
-  // Interaction type
-  set_output_branch_address( out_tree, "mc_ccnc", &ev.ccnc, create, "mc_ccnc/I");
-  set_output_branch_address( out_tree, "mc_interaction", &ev.interaction, create, "mc_interaction/I");
+	// Interaction type
+	set_output_branch_address( out_tree, "mc_ccnc", &ev.ccnc, create, "mc_ccnc/I");
+	set_output_branch_address( out_tree, "mc_interaction", &ev.interaction, create, "mc_interaction/I");
 }
 
 // Helper function that creates a branch (or just sets a new address) for a

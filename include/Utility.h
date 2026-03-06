@@ -173,7 +173,9 @@ public:
 		kSingleBin,
 		kLanternVtxScore,
 		kLanternVtxContainment,
-		kLanternVtxFracHitsOnCosmic	
+		kLanternVtxFracHitsOnCosmic,
+		kTheta,
+		kPhi
 	};
 
 	// ---------------------------------- 

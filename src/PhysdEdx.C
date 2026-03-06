@@ -3,6 +3,8 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include "TF1Convolution.h"
+#include "TCanvas.h"
 
 ROOT::Math::VavilovAccurate vav;
 
@@ -275,11 +277,74 @@ double PhysdEdx::dEdx_PDF(double KE, double pitch, double dEdx){
   double this_dEdx_BB = meandEdx(KE);
   double par[5] = {this_kappa, beta * beta, this_xi, this_dEdx_BB, pitch};
   
-  TF1 *PDF = new TF1("", dEdx_PDF_fuction, -100., 1000., 5);
+  TF1 *PDF = new TF1("PDF", dEdx_PDF_fuction, 0, 20., 5);
   PDF -> SetParameters(par[0], par[1], par[2], par[3], par[4]);
+  PDF -> SetNpx(100);
 
   double out = PDF -> Eval(dEdx);
+
+  /*
+  // Draw 
+  //TCanvas *c3 = new TCanvas();
+  //c3->cd();
+  //PDF->Draw();
+
+  // Gaussian
+  double mpv = PDF->GetMaximumX(0, 20);
+  TF1 *gaus = new TF1("gaus", "gaus", -20, 50.);
+  gaus->SetParameters(PDF->GetMaximum(0,20), mpv - par[3], 0.1*mpv);
+  gaus->SetNpx(100);
+
+  //gaus->SetLineColor(kGreen);
+  //gaus->Draw("SAME");
+
+  
+  // convolution
+  TF1Convolution *conv = new TF1Convolution("PDF", "gaus", -20, 50., true);
+  TF1 *convoluted = new TF1("convoluted", *conv, -20, 50., PDF->GetNpar() + gaus->GetNpar());
+  convoluted->SetNpx(100);
+
+  // copy parameters: first PDF then gaus
+  convoluted->SetParameters(par[0], par[1], par[2], par[3], par[4], PDF->GetMaximum(0,20), mpv - par[3], 0.1*mpv);
+  
+  //convoluted->SetLineColor(kBlue);
+  //convoluted->Draw("SAME");
+
+  //c3->SaveAs("plots/PDF.root");
+  //std::cout << "Out = " << PDF -> Eval(6.5) << ", Gaus = " << gaus -> Eval(6.5) << ", Conv = " << convoluted -> Eval(6.5) << std::endl;
+  //exit (1000);
+  
+  double out = convoluted -> Eval(dEdx);
+
+  delete convoluted;
+  delete gaus;
+  delete conv;
+
+  */
+
   delete PDF;
+ 
+  return out;
+}
+
+double PhysdEdx::dEdx_PDF_max(double KE, double pitch){
+
+  double gamma = (KE/mass)+1.0;
+  double beta = TMath::Sqrt(1-(1.0/(gamma*gamma)));
+  double this_xi = Landau_xi(KE, pitch);
+  double this_Wmax = Get_Wmax(KE);
+  double this_kappa = this_xi / this_Wmax;
+  double this_dEdx_BB = meandEdx(KE);
+  double par[5] = {this_kappa, beta * beta, this_xi, this_dEdx_BB, pitch};
+  
+  TF1 *PDF = new TF1("", dEdx_PDF_fuction, 0, 20, 5);
+  PDF -> SetParameters(par[0], par[1], par[2], par[3], par[4]);
+  PDF -> SetNpx(100);
+
+  double out = PDF -> GetMaximum(0, 10.0);  
+
+  delete PDF;
+
   return out;
 }
 

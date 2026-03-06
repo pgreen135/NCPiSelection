@@ -87,6 +87,9 @@ public:
   // Hypfit object
   Hypfit *hypfit;
 
+  float pionMomentumHypfit;
+  float pionMomentumRange;
+
 	// --- Reconstruction failures information ---
 	bool hasSplitPrimaryShower;
 	bool hasSpuriousLeadingTrack;
@@ -154,6 +157,21 @@ public:
   bool sel_passMuPiLLR_;
   float sel_LanternPID_llr_mu_pi_;
   float sel_LanternPID_llr_pr_pi_;
+
+  bool sel_CC0piFarSideband_;
+  bool sel_CC0piNearSideband_;
+  bool sel_CC1piSideband_;
+  bool sel_NCNpSideband_;
+
+  // Observables for STV tree
+  // truth
+  float mc_pion_momentum_;
+  float mc_pion_theta_;
+  float mc_pion_phi_;
+  // reconstructed
+  float sel_pion_momentum_;
+  float sel_pion_theta_;
+  float sel_pion_phi_;
 
   // -- Variables Krishan Selection -- 
   bool mc_is_inclusive_signal_;
@@ -229,11 +247,11 @@ public:
   std::vector<std::string> *wc_truth_process = nullptr;
   std::vector<std::string> *wc_truth_endprocess = nullptr;
 
-  std::vector<float> *wc_Trecchargeblob_spacepoints_x = nullptr;
-  std::vector<float> *wc_Trecchargeblob_spacepoints_y = nullptr;
-  std::vector<float> *wc_Trecchargeblob_spacepoints_z = nullptr;
-  std::vector<int> *wc_Trecchargeblob_spacepoints_real_cluster_id = nullptr;
-  std::vector<float> *wc_Trecchargeblob_spacepoints_q = nullptr;
+  std::vector<double> *wc_Trecchargeblob_spacepoints_x = nullptr;
+  std::vector<double> *wc_Trecchargeblob_spacepoints_y = nullptr;
+  std::vector<double> *wc_Trecchargeblob_spacepoints_z = nullptr;
+  std::vector<double> *wc_Trecchargeblob_spacepoints_real_cluster_id = nullptr;
+  std::vector<double> *wc_Trecchargeblob_spacepoints_q = nullptr;
 
   // particle classification
   std::vector<Utility::ParticleEnums> wc_particle_classification_v;
@@ -283,6 +301,9 @@ public:
   float lantern_trackEndPosX[1000];        // track end x position
   float lantern_trackEndPosY[1000];        // track end y position
   float lantern_trackEndPosZ[1000];        // track end z position
+  float lantern_trackStartDirX[1000];      // track start x direction
+  float lantern_trackStartDirY[1000];      // track start y direction
+  float lantern_trackStartDirZ[1000];      // track start z direction
 
   int lantern_trackClassified[1000];      // track classified by LArPID
   int lantern_trackPID[1000];   // track classified PDG by LArPID
