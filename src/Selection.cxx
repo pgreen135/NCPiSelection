@@ -284,51 +284,6 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	if (mu_pi_llr_norm < 0.5) return false;
 	_evt.sel_passMuPiLLR_= true;
 
-	// no longer including additional LArPID cuts in selection to reduce sensitvity to performance / overtuning.
-	// require pion candidate to have pr/pi LLR < 0.4 (proton-like rejected)
-	/*
-	//if (pr_pi_llr_norm < 0.5) return false;
-	
-	// LArPID cuts	
-	//if (_evt.lantern_trackPiScore[_evt.lantern_pion_candidate_index] < -0.5) return false;
-	//if (_evt.lantern_trackMuScore[_evt.lantern_pion_candidate_index] > -1.5) return false;
-	//if (_evt.lantern_trackPrScore[_evt.lantern_pion_candidate_index] > -2.0) return false;
-
-	// second muon/pion veto
-	int nSecondMuonPion = 0;
-	int nUnclassified = 0;
-	// loop through primary tracks
-	for (int idx_track = 0; idx_track < _evt.lantern_nTracks; idx_track++) {
-		if (_evt.lantern_trackIsSecondary[idx_track] == 0) { // primary
-
-			// skip candidate track
-			if (idx_track == _evt.lantern_pion_candidate_index) continue;	
-			
-			// skip short tracks
-			float track_length = std::sqrt(
-				std::pow(_evt.lantern_trackEndPosX[idx_track] - _evt.lantern_trackStartPosX[idx_track], 2) +
-				std::pow(_evt.lantern_trackEndPosY[idx_track] - _evt.lantern_trackStartPosY[idx_track], 2) +
-				std::pow(_evt.lantern_trackEndPosZ[idx_track] - _evt.lantern_trackStartPosZ[idx_track], 2) );
-			
-			if (track_length < 2) continue;
-
-			// look for non proton-like	tracks
-
-			if ( std::exp(_evt.lantern_trackPrScore[idx_track]) < 0.2) { // not proton-like
-				nSecondMuonPion++;
-				continue;
-			}
-		}
-	}
-
-	//if (nSecondMuonPion != 0) return false;
-	*/
-
-	// require candidate WC track longer than 20 cm (for momentum calculation)
-	
-	
-	//if (wc_candidate_track_length < 10) return false; // require candidate WC track longer than 20 cm
-
 	// set selected pion variables
     setSelectedPionInformation(_evt);
 

@@ -39,17 +39,17 @@ void SelectionDriver::runBDTSelectionFull() {
 	// lists of file names, weights and types to run over
 	
 	// SURPRISE test samples
-	std::vector<std::string> filename_list = {filename_mc_run4b, //filename_dirt_run4b, filename_beamoff_run4b,
+	std::vector<std::string> filename_list = {filename_mc_run4b, filename_dirt_run4b, filename_beamoff_run4b,
 											  //filename_mc_run4c, //filename_dirt_run4c, filename_beamoff_run4c,
 											  //filename_mc_run4d, //filename_dirt_run4d, filename_beamoff_run4d,
 											  //filename_mc_run5//,  filename_dirt_run5, filename_beamoff_run5
 											  };
-	std::vector<double> pot_weight_list = {pot_weight_mc_run4b,//, pot_weight_dirt_run4b, pot_weight_beamoff_run4b,
+	std::vector<double> pot_weight_list = {pot_weight_mc_run4b, pot_weight_dirt_run4b, pot_weight_beamoff_run4b,
 										   pot_weight_mc_run4c,//, pot_weight_dirt_run4c, pot_weight_beamoff_run4c,
 										   pot_weight_mc_run4d,//, pot_weight_dirt_run4d, pot_weight_beamoff_run4d,
 										   pot_weight_mc_run5//,  pot_weight_dirt_run5, pot_weight_beamoff_run5
 										   };
-	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kMC,//, Utility::kDirt, Utility::kEXT,
+	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kMC, Utility::kDirt, Utility::kEXT,
 												 		   Utility::kMC,//, Utility::kDirt, Utility::kEXT,
 												           Utility::kMC,//, Utility::kDirt, Utility::kEXT,
 												           Utility::kMC//, Utility::kDirt, Utility::kEXT,
@@ -230,7 +230,7 @@ void SelectionDriver::runBDTSelectionFull() {
 	  	std::cout << "Initial number events: " << n_entries << std::endl;
 
 	  	for (int e = 0; e < n_entries; e++) {
-		//for (int e = 0; e < 100000; e++) {
+		//for (int e = 0; e < 10000; e++) {
 
 			// skip events with problems in test sample
 			// need to load PeLEE tree first to get RSE

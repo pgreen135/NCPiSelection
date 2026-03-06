@@ -123,6 +123,7 @@ int main(int argc, char *argv[]) {
 		wc_BDTvars_tree->GetEntry(e);
 		wc_eval_tree->GetEntry(e);
 		wc_PFeval_tree->GetEntry(e); 
+		wc_spacepoints_tree->GetEntry(e);
 		lantern_tree->GetEntry(e); 
 
 		if ( (e != 0) && (n_entries >= 10) &&  (e % (n_entries/10) == 0) ) {
@@ -197,6 +198,7 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	set_output_branch_address( out_tree, "sel_passInitialSelection", &ev.sel_passInitialSelection_, create, "sel_passInitialSelection/O");
 	set_output_branch_address( out_tree, "sel_passMuPiLLR", &ev.sel_passMuPiLLR_, create, "sel_passMuPiLLR/O");
 	set_output_branch_address( out_tree, "sel_NC1pi", &ev.sel_NC1pi_, create, "sel_NC1pi/O");
+
 	set_output_branch_address( out_tree, "sel_CC0piFarSideband", &ev.sel_CC0piFarSideband_, create, "sel_CC0piFarSideband/O");
 	set_output_branch_address( out_tree, "sel_CC0piNearSideband", &ev.sel_CC0piNearSideband_, create, "sel_CC0piNearSideband/O");
 	set_output_branch_address( out_tree, "sel_CC1piSideband", &ev.sel_CC1piSideband_, create, "sel_CC1piSideband/O");
