@@ -28,32 +28,36 @@ EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc
 	wc_PFeval_tree->SetBranchAddress("reco_nuvtxZ", &wc_reco_nuvtxZ);
 
 	wc_PFeval_tree->SetBranchAddress("reco_Ntrack", &wc_reco_Ntrack);
-	wc_PFeval_tree->SetBranchAddress("reco_id", wc_reco_id);
-	wc_PFeval_tree->SetBranchAddress("reco_pdg", wc_reco_pdg);
-	wc_PFeval_tree->SetBranchAddress("reco_mother", wc_reco_mother);
-	wc_PFeval_tree->SetBranchAddress("reco_startXYZT", wc_reco_startXYZT);
-	wc_PFeval_tree->SetBranchAddress("reco_endXYZT", wc_reco_endXYZT);
-	wc_PFeval_tree->SetBranchAddress("reco_startMomentum", wc_reco_startMomentum);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_classified", wc_reco_larpid_classified);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_pdg", wc_reco_larpid_pdg);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_el", wc_reco_larpid_pidScore_el);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_ph", wc_reco_larpid_pidScore_ph);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_mu", wc_reco_larpid_pidScore_mu);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_pi", wc_reco_larpid_pidScore_pi);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_pr", wc_reco_larpid_pidScore_pr);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_procScore_prim", wc_reco_larpid_procScore_prim);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_procScore_chgd", wc_reco_larpid_procScore_chgd);
-	wc_PFeval_tree->SetBranchAddress("reco_larpid_procScore_ntrl", wc_reco_larpid_procScore_ntrl);
+	wc_PFeval_tree->SetBranchAddress("reco_id", &wc_reco_id);
+	wc_PFeval_tree->SetBranchAddress("reco_pdg", &wc_reco_pdg);
+	wc_PFeval_tree->SetBranchAddress("reco_mother", &wc_reco_mother);
+	wc_PFeval_tree->SetBranchAddress("reco_startXYZT", &wc_reco_startXYZT);
+	wc_PFeval_tree->SetBranchAddress("reco_endXYZT", &wc_reco_endXYZT);
+	wc_PFeval_tree->SetBranchAddress("reco_startMomentum", &wc_reco_startMomentum);
+	wc_PFeval_tree->SetBranchAddress("reco_muonMomentum", &wc_reco_muonMomentum);
+	wc_PFeval_tree->SetBranchAddress("reco_protonMomentum", &wc_reco_protonMomentum);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_classified", &wc_reco_larpid_classified);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_pdg", &wc_reco_larpid_pdg);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_el", &wc_reco_larpid_pidScore_el);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_ph", &wc_reco_larpid_pidScore_ph);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_mu", &wc_reco_larpid_pidScore_mu);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_pi", &wc_reco_larpid_pidScore_pi);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_pidScore_pr", &wc_reco_larpid_pidScore_pr);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_procScore_prim", &wc_reco_larpid_procScore_prim);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_procScore_chgd", &wc_reco_larpid_procScore_chgd);
+	wc_PFeval_tree->SetBranchAddress("reco_larpid_procScore_ntrl", &wc_reco_larpid_procScore_ntrl);
 
-	wc_PFeval_tree->SetBranchAddress("reco_truthMatch_pdg", wc_reco_truthMatch_pdg);
-	wc_PFeval_tree->SetBranchAddress("reco_truthMatch_id", wc_reco_truthMatch_id);
+	wc_PFeval_tree->SetBranchAddress("reco_truthMatch_pdg", &wc_reco_truthMatch_pdg);
+	wc_PFeval_tree->SetBranchAddress("reco_truthMatch_id", &wc_reco_truthMatch_id);
 
 	wc_PFeval_tree->SetBranchAddress("truth_Ntrack", &wc_truth_Ntrack);
-	wc_PFeval_tree->SetBranchAddress("truth_id", wc_truth_id);
-	wc_PFeval_tree->SetBranchAddress("truth_pdg", wc_truth_pdg);
-	wc_PFeval_tree->SetBranchAddress("truth_mother", wc_truth_mother);
+	wc_PFeval_tree->SetBranchAddress("truth_id", &wc_truth_id);
+	wc_PFeval_tree->SetBranchAddress("truth_pdg", &wc_truth_pdg);
+	wc_PFeval_tree->SetBranchAddress("truth_mother", &wc_truth_mother);
 	wc_PFeval_tree->SetBranchAddress("truth_startMomentum", wc_truth_startMomentum);
 
+	wc_PFeval_tree->SetBranchAddress("mcs_emu_tracklen", &wc_mcs_emu_tracklen);
+	
 	wc_PFeval_tree->SetBranchAddress("truth_process", &wc_truth_process);
 	wc_PFeval_tree->SetBranchAddress("truth_endprocess", &wc_truth_endprocess);
 
@@ -85,24 +89,24 @@ EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc
 	lantern_tree->SetBranchAddress("vtxFracHitsOnCosmic", &lantern_vtxFracHitsOnCosmic);
 
 	lantern_tree->SetBranchAddress("nTracks", &lantern_nTracks);
-	lantern_tree->SetBranchAddress("trackIsSecondary", lantern_trackIsSecondary);
-	lantern_tree->SetBranchAddress("trackStartPosX", lantern_trackStartPosX);
-	lantern_tree->SetBranchAddress("trackStartPosY", lantern_trackStartPosY);
-	lantern_tree->SetBranchAddress("trackStartPosZ", lantern_trackStartPosZ);
-	lantern_tree->SetBranchAddress("trackEndPosX", lantern_trackEndPosX);
-	lantern_tree->SetBranchAddress("trackEndPosY", lantern_trackEndPosY);
-	lantern_tree->SetBranchAddress("trackEndPosZ", lantern_trackEndPosZ);
-	lantern_tree->SetBranchAddress("trackStartDirX", lantern_trackStartDirX);
-	lantern_tree->SetBranchAddress("trackStartDirY", lantern_trackStartDirY);
-	lantern_tree->SetBranchAddress("trackStartDirZ", lantern_trackStartDirZ);
+	lantern_tree->SetBranchAddress("trackIsSecondary", &lantern_trackIsSecondary);
+	lantern_tree->SetBranchAddress("trackStartPosX", &lantern_trackStartPosX);
+	lantern_tree->SetBranchAddress("trackStartPosY", &lantern_trackStartPosY);
+	lantern_tree->SetBranchAddress("trackStartPosZ", &lantern_trackStartPosZ);
+	lantern_tree->SetBranchAddress("trackEndPosX", &lantern_trackEndPosX);
+	lantern_tree->SetBranchAddress("trackEndPosY", &lantern_trackEndPosY);
+	lantern_tree->SetBranchAddress("trackEndPosZ", &lantern_trackEndPosZ);
+	lantern_tree->SetBranchAddress("trackStartDirX", &lantern_trackStartDirX);
+	lantern_tree->SetBranchAddress("trackStartDirY", &lantern_trackStartDirY);
+	lantern_tree->SetBranchAddress("trackStartDirZ", &lantern_trackStartDirZ);
 
-	lantern_tree->SetBranchAddress("trackClassified", lantern_trackClassified);
-	lantern_tree->SetBranchAddress("trackPID", lantern_trackPID);
-	lantern_tree->SetBranchAddress("trackMuScore", lantern_trackMuScore);
-	lantern_tree->SetBranchAddress("trackPiScore", lantern_trackPiScore);
-	lantern_tree->SetBranchAddress("trackPrScore", lantern_trackPrScore);
+	lantern_tree->SetBranchAddress("trackClassified", &lantern_trackClassified);
+	lantern_tree->SetBranchAddress("trackPID", &lantern_trackPID);
+	lantern_tree->SetBranchAddress("trackMuScore", &lantern_trackMuScore);
+	lantern_tree->SetBranchAddress("trackPiScore", &lantern_trackPiScore);
+	lantern_tree->SetBranchAddress("trackPrScore", &lantern_trackPrScore);
 
-	lantern_tree->SetBranchAddress("trackTruePID", lantern_trackTruePID);
+	lantern_tree->SetBranchAddress("trackTruePID", &lantern_trackTruePID);
 
 	lantern_tree->SetBranchAddress("nShowers", &lantern_nShowers);
 	lantern_tree->SetBranchAddress("showerIsSecondary", lantern_showerIsSecondary);
@@ -153,6 +157,7 @@ EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc
     pelee_tree->SetBranchAddress("weightTune", &weightTune);
     pelee_tree->SetBranchAddress("ppfx_cv", &ppfx_cv);
     pelee_tree->SetBranchAddress("weights", &mc_weights_map_);
+	pelee_tree->SetBranchAddress("hA2025reweight", &hA2025reweight);
 
 	pelee_tree->SetBranchAddress("nslice", &nslice);
 	pelee_tree->SetBranchAddress("n_tracks", &n_tracks);
@@ -387,21 +392,6 @@ EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc
 
 	pelee_tree->SetBranchAddress("trk_avg_deflection_stdev_v", &trk_avg_deflection_stdev_v);
 
-	// NuGraph
-	pelee_tree->SetBranchAddress("pfng2mipfrac", &pfng2mipfrac);
-	pelee_tree->SetBranchAddress("pfng2hipfrac", &pfng2hipfrac);
-	pelee_tree->SetBranchAddress("pfng2shrfrac", &pfng2shrfrac);
-	pelee_tree->SetBranchAddress("pfng2mclfrac", &pfng2mclfrac);
-	pelee_tree->SetBranchAddress("pfng2dfsfrac", &pfng2dfsfrac);
-
-	// Blips
-	pelee_tree->SetBranchAddress("nblips_saved", &nblips_saved);
-	pelee_tree->SetBranchAddress("blip_energy", &blip_energy_v);
-	pelee_tree->SetBranchAddress("blip_x", &blip_x_v);
-	pelee_tree->SetBranchAddress("blip_y", &blip_y_v);
-	pelee_tree->SetBranchAddress("blip_z", &blip_z_v);
-	pelee_tree->SetBranchAddress("blip_proxtrkdist", &blip_proxtrkdist_v);
-	pelee_tree->SetBranchAddress("blip_touchtrk", &blip_touchtrk_v);
 
 	// Load FSI weight histograms
 	TFile *FSI_NC_piminus = new TFile("../fsiweights/fsi_weights_nc_piminus.root");
@@ -474,6 +464,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 					int nrho = 0;
 					int nomega = 0;
 					int nphi = 0;
+
 						
 					for (int i = 0; i < mc_pdg_v->size(); i++) {
 						
@@ -482,7 +473,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 													 pow(mc_py_v->at(i),2) + 
 													 pow(mc_pz_v->at(i),2) );
 
-						if (mc_pdg_v->at(i) == 13 && mc_momentum > 0.1) nmuon_threshold++; // 100 MeV/c threshold
+						if (mc_pdg_v->at(i) == 13) nmuon_threshold++;
 						if ((mc_pdg_v->at(i) == 211 || mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) npion_threshold++; // 100 MeV/c threshold						
 						if ((mc_pdg_v->at(i) == 321 || mc_pdg_v->at(i) == -321 || mc_pdg_v->at(i) == 311)) nkaon++;
 						if ((mc_pdg_v->at(i) == 213 || mc_pdg_v->at(i) == -213 || mc_pdg_v->at(i) == 113)) nrho++;
@@ -493,12 +484,6 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 					if (nmuon_threshold == 1 && npion_threshold == 0 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
 						// classify as CC numu 0pi
 						classification = Utility::kCCNumu0pi;
-						category_ = static_cast<int>(classification);
-						return;
-					}
-					else if (nmuon_threshold == 1 && npion_threshold == 1 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
-						// classify as CC numu 1pi
-						classification = Utility::kCCNumu1pi;
 						category_ = static_cast<int>(classification);
 						return;
 					}
@@ -527,6 +512,8 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 				// NC pi+ (signal)
 				// count pions above threshold
 				int npion_threshold = 0;
+				// count protons above threshold
+				int nproton_threshold = 0;
 				// count other mesons present
 				int nkaon = 0;
 				int nrho = 0;
@@ -540,19 +527,24 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 													pow(mc_py_v->at(i),2) + 
 													pow(mc_pz_v->at(i),2) );
 
-					if ((mc_pdg_v->at(i) == 211 || mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) npion_threshold++; // 100 MeV/c threshold						
+					if ((mc_pdg_v->at(i) == 211 || mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) npion_threshold++; // 100 MeV/c threshold					
+					if ((mc_pdg_v->at(i) == 2212) && mc_momentum > 0.25) nproton_threshold++; // 250 MeV/c threshold
 					if ((mc_pdg_v->at(i) == 321 || mc_pdg_v->at(i) == -321 || mc_pdg_v->at(i) == 311)) nkaon++;
 					if ((mc_pdg_v->at(i) == 213 || mc_pdg_v->at(i) == -213 || mc_pdg_v->at(i) == 113)) nrho++;
 					if (mc_pdg_v->at(i) == 223) nomega++;
 					if (mc_pdg_v->at(i) == 333) nphi++;   	
 				}
 				// currently numu only
-				// check for exactly 1 pion and no other mesons above threshold
-				if (nu_pdg == 14 && npion_threshold == 1 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
+				// check for exactly 1 pion and no other mesons above threshold, pion within momentum range
+				if (nu_pdg == 14 && npion_threshold == 1 && nproton_threshold >= 1 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
+				//if (nu_pdg == 14 && npion_threshold == 1 && nproton_threshold == 0 && npi0 == 0 && nkaon == 0 && nrho == 0 && nomega == 0 && nphi == 0 && neta == 0) {
 					// classify as NC 1pi
 					classification = Utility::kNC1pi;
 					category_ = static_cast<int>(classification);
 					mc_is_signal_ = true;
+
+					// save number of true protons above threshold
+					mc_NProtons_ = nproton_threshold;
 
 					// determine pion reinteraction type 
 					// loop of truth particles, WC tree
@@ -596,7 +588,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 					truePionNProtons = nProtons;
 
 					return;		
-				}			
+				}		
 				else {
 					// classify as NC other
 					classification = Utility::kNCOther;
@@ -681,8 +673,8 @@ void EventContainer::ParticleClassifier(Utility::FileTypeEnums type){
 
 			// momentum
 			double momentum = std::sqrt( pow(backtracked_px_v->at(i_trk),2) + 
-										 pow(backtracked_px_v->at(i_trk),2) + 
-										 pow(backtracked_px_v->at(i_trk),2) );
+										 pow(backtracked_py_v->at(i_trk),2) + 
+										 pow(backtracked_pz_v->at(i_trk),2) );
 
 
 			// classify the particle
@@ -873,7 +865,7 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 	weightTune = checkWeight(weightTune);
 
 	// overlay MC events
-	if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero || type == Utility::kFakeData) {			
+	if (type == Utility::kMC || type == Utility::kDetVar || type == Utility::kIntrinsic || type == Utility::kCCNCPiZero) {			
 		
 		// CV weight
 		weight = weightSpline * weightTune;
@@ -882,9 +874,25 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 		normalisation_weight = 1;
 
 		// apply FSI reweighting for pions in signal events
-		double fsi_weight = GetFSIWeight();
-		weight *= fsi_weight;
+		//double fsi_weight = GetFSIWeight();
+		//weight *= fsi_weight;
 
+		// apply general FSI reweighting
+		weight *= hA2025reweight;
+
+		// apply rootino weight
+		// Not needed in PeLEE – already applied.
+		//double rootino_weight = mc_weights_map_->at("RootinoFix_UBGenie")[0];
+		//if (rootino_weight != 1.0){
+		//	std::cout << "Rootino Weight: " << rootino_weight << ", Tune Weight: " << weightTune << ", RSE: " << run << " " << sub << " " << evt << std::endl;
+		//}
+		//weight *= rootino_weight;
+		
+	}
+
+	if (type == Utility::kFakeData) {
+		weight = 1;
+	    normalisation_weight = 1;
 	}
 	
 	// dirt events
@@ -893,7 +901,13 @@ void EventContainer::calculateCVEventWeight(Utility::FileTypeEnums type, Utility
 		weight = weightSpline * weightTune;
 
 		normalisation_weight = 1;
-		
+
+		// apply general FSI reweighting
+		weight *= hA2025reweight;
+
+		// apply rootino weight
+		//double rootino_weight = mc_weights_map_->at("RootinoFix_UBGenie")[0];
+		//weight *= rootino_weight;
 	}
 
 	// beam off events
@@ -1012,8 +1026,8 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
         trk_energy_muon = trk_energy_muon_v->at(trk_id-1);
         trk_end_spacepoints = trk_end_spacepoints_v->at(trk_id-1);
         trk_planehits_U = pfnplanehits_U->at(trk_id-1);
-        trk_planehits_V = pfnplanehits_U->at(trk_id-1);
-        trk_planehits_Y = pfnplanehits_U->at(trk_id-1);
+        trk_planehits_V = pfnplanehits_V->at(trk_id-1);
+        trk_planehits_Y = pfnplanehits_Y->at(trk_id-1);
         trk_pfpgeneration = pfp_generation_v->at(trk_id-1);
 	}
 	else {
@@ -1371,7 +1385,7 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
 	// primary track and second track opening angle
 	if (n_tracks_contained > 1 && trk_dir_x != 9999 && trk2_dir_x != 9999) {
 
-		TVector3 trkDir(trk_dir_x, trk_dir_x, trk_dir_x);
+		TVector3 trkDir(trk_dir_x, trk_dir_y, trk_dir_z);
 		TVector3 trk2Dir(trk2_dir_x, trk2_dir_y, trk2_dir_z);
 		tk1tk2_angle = trkDir.Angle(trk2Dir) * 180 / 3.14159;
 	}
@@ -1529,6 +1543,8 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
     mc_is_inclusive_signal_ = false;
     category_ = 9999;
 
+	mc_NProtons_ = -1;
+
     // set horn current
     // FHC
 	if (runPeriod == Utility::kRun1a || runPeriod == Utility::kRun2a || runPeriod == Utility::kRun4cd || runPeriod == Utility::kRun5) hornCurrent_ = 0;
@@ -1571,9 +1587,6 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
 
 	wc_n_pion_candidate_daughters = 0;
 	wc_pion_candidate_daughters_total_energy = 0.0;
-	wc_n_blips_25cm = 0;
-	wc_n_blips_50cm = 0;
-	wc_n_blips_100cm = 0;
 
 	//std::cout << "trk_sce_start_x_v->size() = " << trk_sce_start_x_v->size() << std::endl;
 	//std::cout << "wc_reco_Ntrack = " << wc_reco_Ntrack << std::endl;
@@ -1589,6 +1602,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
 	wc_primaryTrackIndex = -1;
 	wc_primaryTrackLength = -1;
 	wc_primaryTrackVertexSeparation = -1;
+
+	wc_number_proton_candidates = -1;
+	wc_primary_proton_candidate_index = -1;
+	wc_primary_proton_candidate_length = 0;
 
 	// Lantern variables
 	lantern_primaryTrackIndex = -1;
@@ -1609,6 +1626,15 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
 	sel_pion_theta_ = -9999;
 	sel_pion_phi_ = -9999;
 	sel_pion_momentum_ = -9999;
+	sel_pion_momentum_range_ = -9999;
+
+	mc_proton_theta_ = -9999;
+	mc_proton_momentum_ = -9999;
+	sel_proton_theta_ = -9999;
+	sel_proton_momentum_ = -9999;
+
+	sel_CC1piSideband_track_larpidScore_ = -9999;
+    sel_CC1piSideband_track_classification_ = Utility::kCosmic;
 
 }
 
@@ -1843,26 +1869,31 @@ float EventContainer::CalculatePionMomentumRange(float R) {
 	else return 0;
 }
 
+// proton momentum range-based, using PhysdEdx spline
+float EventContainer::CalculateProtonMomentumRange(float R) {
+
+	if (R <= 0) return 0;
+
+	const double proton_mass = 938.27208816; // MeV
+	double KE = hypfit->map_PhysdEdx[2212]->KEFromRangeSpline(R); // MeV
+	if (KE <= 0) return 0;
+
+	return std::sqrt(KE * KE + 2 * KE * proton_mass) / 1000; // GeV/c
+
+}
+
 float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
 
-	//std::vector<double> test_rr = {2., 4., 6., 8., 10., 12., 14., 16., 18., 20., 22., 24., 26., 28., 30.};
-	//std::vector<double> test_dedx = {6., 5.8, 5.6, 5.4, 5.2, 5.0, 4.8, 4.6, 4.4, 4.2, 4.0, 3.8, 3.6, 3.4, 3.2};
-
 	// get candidate track ID
-	int recoID = wc_reco_id[wc_pion_candidate_index];
-
-	//std::cout << "Candidate track ID: " << recoID << std::endl;
+	int recoID = wc_reco_id[candidateID];
 
 	// get spacepoints for candidate track
-	std::vector<float> spacepoints_x; spacepoints_x.reserve(1000);
-	std::vector<float> spacepoints_y; spacepoints_y.reserve(1000);
-	std::vector<float> spacepoints_z; spacepoints_z.reserve(1000);
-	std::vector<float> spacepoints_q; spacepoints_q.reserve(1000);
-
-	//std::cout << "Total number of spacepoints: " << wc_Trecchargeblob_spacepoints_real_cluster_id->size() << std::endl;
+	std::vector<float> spacepoints_x; spacepoints_x.reserve(10000);
+	std::vector<float> spacepoints_y; spacepoints_y.reserve(10000);
+	std::vector<float> spacepoints_z; spacepoints_z.reserve(10000);
+	std::vector<float> spacepoints_q; spacepoints_q.reserve(10000);
 
 	for (int i = 0; i < wc_Trecchargeblob_spacepoints_real_cluster_id->size(); i++) {
-		//std::cout << "Spacepoint " << i << ": cluster ID = " << wc_Trecchargeblob_spacepoints_real_cluster_id->at(i) << std::endl;
 		if (wc_Trecchargeblob_spacepoints_real_cluster_id->at(i) == recoID) {
 			spacepoints_x.push_back(wc_Trecchargeblob_spacepoints_x->at(i));
 			spacepoints_y.push_back(wc_Trecchargeblob_spacepoints_y->at(i));
@@ -1874,21 +1905,12 @@ float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
 	// check number of spacepoints for candidate, if zero return zero momentum (error case)
 	int n_spacepoints = spacepoints_x.size();
 	if (n_spacepoints == 0) {
-		std::cout << "Error: no spacepoints found for candidate track!" << std::endl;
 		return 0;
 	}
 
-	// print candidate start and end positions, using track reconstruction variables (should be consistent with spacepoint positions)
-	//std::cout << "Candidate track start position: (" << wc_reco_startXYZT[wc_pion_candidate_index][0] << ", " << wc_reco_startXYZT[wc_pion_candidate_index][1] << ", " << wc_reco_startXYZT[wc_pion_candidate_index][2] << ")" << std::endl;
-	//std::cout << "Candidate track end position: (" << wc_reco_endXYZT[wc_pion_candidate_index][0] << ", " << wc_reco_endXYZT[wc_pion_candidate_index][1] << ", " << wc_reco_endXYZT[wc_pion_candidate_index][2] << ")" << std::endl;
-	
-
-	// print first spacepoint position
-	//std::cout << "Original First spacepoint position: (" << spacepoints_x.at(0) << ", " << spacepoints_y.at(0) << ", " << spacepoints_z.at(0) << ")" << std::endl;
-
 	// check whether first space point is start or end of track, by comparing to track start and end positions
-	double start_dist = std::sqrt(std::pow(spacepoints_x.at(0) - wc_reco_startXYZT[wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(0) - wc_reco_startXYZT[wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(0) - wc_reco_startXYZT[wc_pion_candidate_index][2], 2));
-	double end_dist = std::sqrt(std::pow(spacepoints_x.at(0) - wc_reco_endXYZT[wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(0) - wc_reco_endXYZT[wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(0) - wc_reco_endXYZT[wc_pion_candidate_index][2], 2));
+	double start_dist = std::sqrt(std::pow(spacepoints_x.at(0) - wc_reco_startXYZT[candidateID][0], 2) + std::pow(spacepoints_y.at(0) - wc_reco_startXYZT[candidateID][1], 2) + std::pow(spacepoints_z.at(0) - wc_reco_startXYZT[candidateID][2], 2));
+	double end_dist = std::sqrt(std::pow(spacepoints_x.at(0) - wc_reco_endXYZT[candidateID][0], 2) + std::pow(spacepoints_y.at(0) - wc_reco_endXYZT[candidateID][1], 2) + std::pow(spacepoints_z.at(0) - wc_reco_endXYZT[candidateID][2], 2));
 	// reverse if filled backwards
 	//std::cout << "start_dist = " << start_dist << ", end_dist = " << end_dist << std::endl;
 	if (end_dist < start_dist) {
@@ -1901,9 +1923,6 @@ float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
 	else {
 		//std::cout << "Spacepoint order for candidate track is correct." << std::endl;
 	}
-	
-	//std::cout << "Fixed First spacepoint position: (" << spacepoints_x.at(0) << ", " << spacepoints_y.at(0) << ", " << spacepoints_z.at(0) << ")" << std::endl;
-
 
 	// calculate dx, dq, and dE for each spacepoint
 	std::vector<double> dx; dx.reserve(n_spacepoints-1);
@@ -1932,16 +1951,8 @@ float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
 		if (sp_dEdx < 0) sp_dEdx = 0;
 		if (sp_dEdx > 50) sp_dEdx = 50;
 		
-		// is there an energy scaling needed?
-		// dE/dx seems low -- to be investigated.
+		// energy scaling
 		sp_dEdx *= 1.2;
-
-		// to MIP units
-		/*
-		double sp_dEdx = sp_dQdx / 43e3;
-		// convert to MeV/cm
-		sp_dEdx = sp_dEdx * 2.2; // to be tuned to MIP dE/dx expected in Sungbin's code
-		*/
 		
 		dx.push_back(sp_dx);
 		dEdx.push_back(sp_dEdx);
@@ -1954,10 +1965,9 @@ float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
 		}
 		*/
 		// alternative - just use track end position to calculate rr
-		double sp_rr = std::sqrt(std::pow(spacepoints_x.at(i) - wc_reco_endXYZT[wc_pion_candidate_index][0], 2) + std::pow(spacepoints_y.at(i) - wc_reco_endXYZT[wc_pion_candidate_index][1], 2) + std::pow(spacepoints_z.at(i) - wc_reco_endXYZT[wc_pion_candidate_index][2], 2));
+		double sp_rr = std::sqrt(std::pow(spacepoints_x.at(i) - wc_reco_endXYZT[candidateID][0], 2) + std::pow(spacepoints_y.at(i) - wc_reco_endXYZT[candidateID][1], 2) + std::pow(spacepoints_z.at(i) - wc_reco_endXYZT[candidateID][2], 2));
 		rr.push_back(sp_rr);
 
-		//std::cout << "Spacepoint " << i << ": dx = " << sp_dx << " cm, dEdx = "  <<  sp_dEdx << " MeV/cm, rr = " << sp_rr << " cm" << std::endl;
 	}
 
 	// reverse dE/dx and rr vectors as needed for hyfit
@@ -1967,17 +1977,8 @@ float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
 	// perform fit
 	//std::cout << "Performing fit..." << std::endl;
 	double pion_likelihood_p = hypfit->Likelihood(dEdx, rr, 211);
-	//double pion_gaus_KE = hypfit->Gaussian(dEdx, rr, 211);
 
-
-	//std::cout << "pion_likelihood_KE: " << pion_likelihood_KE << ", pion_likelihood_p: " << pion_likelihood_p << std::endl;
-	//std::cout << "pion_gaus_KE: " << pion_gaus_KE << ", pion_gaus_p: " << pion_gaus_p << std::endl;
-
-	// print truth pion KE
-	//std::cout << "Truth pion KE: " << wc_true_pion_KE << " GeV" << std::endl;
-	
 	return pion_likelihood_p;
-	//return 1.0;
 }
 
 // shower track end proximity
@@ -2191,6 +2192,7 @@ double EventContainer::GetFSIWeight() {
 
 	double fsi_weight = 1.0;
 
+	/*
 	// only consider NC 1pi and CC 1pi events, for now
 	if (classification == Utility::kNC1pi || classification == Utility::kCCNumu1pi) {
 
@@ -2254,6 +2256,7 @@ double EventContainer::GetFSIWeight() {
 
 		fsi_weight = checkWeight(fsi_weight);
 	}
+	*/
 
 	return fsi_weight;
 }

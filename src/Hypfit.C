@@ -120,15 +120,15 @@ double Hypfit::Likelihood(const std::vector<double> & dEdx, const std::vector<do
   int this_N_hits = this_N_calo;
   
   // Make a plot for debugging 
-  TH1F *likelihoodPlot = new TH1F("", "", 300, 0, 300);
+  //TH1F *likelihoodPlot = new TH1F("", "", 300, 0, 300);
   
   // Store actual used dEdx and ResRange for debugging
-  std::vector<double> used_dEdx;
-  std::vector<double> used_ResRange;
+  std::vector<double> used_dEdx; used_dEdx.reserve(1000);
+  std::vector<double> used_ResRange; used_ResRange.reserve(1000);
 
   // Store actual likelihood values and range for debugging
-  std::vector<double> likelihood_values;
-  std::vector<double> likelihood_ResRange;
+  std::vector<double> likelihood_values; likelihood_values.reserve(1000);
+  std::vector<double> likelihood_ResRange; likelihood_ResRange.reserve(1000);
 
   double default_m2lnL = -1.;
   // == Fit
@@ -153,7 +153,7 @@ double Hypfit::Likelihood(const std::vector<double> & dEdx, const std::vector<do
 
       
       if(this_likelihood < 1e-6) this_likelihood = 1e-6; // == Avoid zero likelihood
-      //if(this_likelihood_max < 1e-6) this_likelihood_max = 1e-6;
+      if(this_likelihood_max < 1e-6) this_likelihood_max = 1e-6;
       //if (i == 10) std::cout << "(i,j) = (" << i << "," << j << "), this_KE = " << this_KE << ", dEdx_measured = " << dEdx_measured << ", this_likelihood: " << this_likelihood << ", this_likelihood_max: " << this_likelihood_max << ", m2lnL: " << (-2.0) * (log(this_likelihood) - log(this_likelihood_max)) << std::endl;
       this_m2lnL += (-2.0) * (log(this_likelihood) - log(this_likelihood_max));
     }
@@ -162,7 +162,7 @@ double Hypfit::Likelihood(const std::vector<double> & dEdx, const std::vector<do
     this_m2lnL = this_m2lnL / (this_N_hits - 2*N_skip);
 
     //std::cout << "Res Length = " << ResRange.at(this_N_calo - 1) + this_additional_res_length << ", likelihood = " << this_m2lnL << std::endl;
-    likelihoodPlot->Fill(ResRange.at(this_N_calo - 1) + this_additional_res_length, this_m2lnL);
+    //likelihoodPlot->Fill(ResRange.at(this_N_calo - 1) + this_additional_res_length, this_m2lnL);
 
     likelihood_values.push_back(this_m2lnL);
 

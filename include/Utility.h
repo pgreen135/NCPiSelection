@@ -60,7 +60,6 @@ public:
 		kNC1pi,
 		kNCOther,
 		kCCNumu0pi,
-		kCCNumu1pi,
 		kCCNumuNpi,
 		kCCNumuOther,
 		kCCNue,

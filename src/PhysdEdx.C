@@ -267,6 +267,51 @@ double dEdx_PDF_fuction(double *x, double *par){
   return this_vav;
 }
 
+double dEdx_PDF_fuction_alternative(double *x, double *par){
+  // nasty code from gpt-5
+
+  double a = par[2] / par[4];
+  double b = (0.422784 + par[1] + log(par[0])) * par[2] / par[4] + par[3];
+
+  // mpv (check)
+  const double mpv0 = par[3];
+
+  // 10% detector smearing around the unsmeared MPV
+  const double sigma_smear = 0.05 * mpv0;
+
+  double result = 0.0;
+
+  const int N = 50;                 // integration steps
+  double range = 3.0 * sigma_smear; // integrate ±3σ
+  double step = 2.0 * range / N;
+
+  for(int i = 0; i < N; i++){
+    double xp = x[0] - range + (i + 0.5) * step;
+
+    double y = (xp - b) / a;
+    double this_vav = 0.0;
+
+    if(par[0] < 0.01){ // Landau
+      this_vav = TMath::Landau(y) / a;
+    }
+    else if(par[0] > 10.){ // Gaussian
+      double mu = vav.Mean(par[0], par[1]);
+      double sigma = sqrt(vav.Variance(par[0], par[1]));
+      this_vav = TMath::Gaus(y, mu, sigma);
+    }
+    else{ // Vavilov
+      this_vav = vav.Pdf(y, par[0], par[1]) / a;
+    }
+
+    // Gausian smearing
+    double gaus = TMath::Gaus(x[0], xp, sigma_smear, false);
+    result += this_vav * gaus * step;
+    //result += this_vav * step;
+  }
+
+  return result;
+}
+
 double PhysdEdx::dEdx_PDF(double KE, double pitch, double dEdx){
 
   double gamma = (KE/mass)+1.0;
@@ -277,52 +322,65 @@ double PhysdEdx::dEdx_PDF(double KE, double pitch, double dEdx){
   double this_dEdx_BB = meandEdx(KE);
   double par[5] = {this_kappa, beta * beta, this_xi, this_dEdx_BB, pitch};
   
-  TF1 *PDF = new TF1("PDF", dEdx_PDF_fuction, 0, 20., 5);
+  TF1 *PDF = new TF1("PDF", dEdx_PDF_fuction, -5, 20., 5);
   PDF -> SetParameters(par[0], par[1], par[2], par[3], par[4]);
-  PDF -> SetNpx(100);
+  PDF -> SetNpx(250);
 
   double out = PDF -> Eval(dEdx);
 
-  /*
+  // Alternative pdf - Gaussian smoothing
+  //TF1 *PDF_alternative = new TF1("PDF", dEdx_PDF_fuction_alternative, -5., 20., 5);
+  //PDF_alternative -> SetParameters(par[0], par[1], par[2], par[3], par[4]);
+  //PDF_alternative -> SetNpx(100);
+
+  //double out = PDF_alternative -> Eval(dEdx);
+  
+  
   // Draw 
-  //TCanvas *c3 = new TCanvas();
-  //c3->cd();
-  //PDF->Draw();
+  /*
+  TCanvas *c3 = new TCanvas();
+  c3->cd();
+  PDF->Draw();
 
   // Gaussian
+  
   double mpv = PDF->GetMaximumX(0, 20);
   TF1 *gaus = new TF1("gaus", "gaus", -20, 50.);
   gaus->SetParameters(PDF->GetMaximum(0,20), mpv - par[3], 0.1*mpv);
-  gaus->SetNpx(100);
+  gaus->SetNpx(250);
 
-  //gaus->SetLineColor(kGreen);
+  gaus->SetLineColor(kGreen);
   //gaus->Draw("SAME");
-
   
-  // convolution
+  // full convolution
   TF1Convolution *conv = new TF1Convolution("PDF", "gaus", -20, 50., true);
   TF1 *convoluted = new TF1("convoluted", *conv, -20, 50., PDF->GetNpar() + gaus->GetNpar());
-  convoluted->SetNpx(100);
+  convoluted->SetNpx(250);
 
   // copy parameters: first PDF then gaus
   convoluted->SetParameters(par[0], par[1], par[2], par[3], par[4], PDF->GetMaximum(0,20), mpv - par[3], 0.1*mpv);
   
-  //convoluted->SetLineColor(kBlue);
+  convoluted->SetLineColor(kBlue);
   //convoluted->Draw("SAME");
-
-  //c3->SaveAs("plots/PDF.root");
-  //std::cout << "Out = " << PDF -> Eval(6.5) << ", Gaus = " << gaus -> Eval(6.5) << ", Conv = " << convoluted -> Eval(6.5) << std::endl;
-  //exit (1000);
   
-  double out = convoluted -> Eval(dEdx);
 
-  delete convoluted;
-  delete gaus;
-  delete conv;
+  // alternative pdf
+  PDF_alternative->SetLineColor(kViolet);
+  PDF_alternative->Draw("SAME");
+  
 
+  c3->SaveAs("plots/PDF.root");
+  std::cout << "Out = " << PDF -> Eval(6.5) << ", Alternative = " << PDF_alternative -> Eval(6.5) << std::endl;
+  exit (1000);
   */
+  
+  //delete convoluted;
+  //delete gaus;
+  //delete conv;
+  
 
   delete PDF;
+  //delete PDF_alternative;
  
   return out;
 }
@@ -339,7 +397,7 @@ double PhysdEdx::dEdx_PDF_max(double KE, double pitch){
   
   TF1 *PDF = new TF1("", dEdx_PDF_fuction, 0, 20, 5);
   PDF -> SetParameters(par[0], par[1], par[2], par[3], par[4]);
-  PDF -> SetNpx(100);
+  PDF -> SetNpx(250);
 
   double out = PDF -> GetMaximum(0, 10.0);  
 

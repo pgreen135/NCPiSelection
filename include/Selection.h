@@ -41,7 +41,9 @@ public:
 	int CountProtons(EventContainer &_evt, Utility::RunPeriodEnums runPeriod);
 
 	// Selected Pion Information
+	void setTruthPionInformation(EventContainer &_evt);
 	void setSelectedPionInformation(EventContainer &_evt);
+	void setSidebandRecoKinematics(EventContainer &_evt, int WC_Idx);
 	
 	// ----------------------------------
 

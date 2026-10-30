@@ -405,10 +405,6 @@ void CreateTrainingTree::addEvent(const EventContainer &_evt, Utility::Classific
 			wc_n_pion_candidate_daughters = static_cast<float>(_evt.wc_n_pion_candidate_daughters);
 			wc_pion_candidate_daughters_total_energy = _evt.wc_pion_candidate_daughters_total_energy;
 
-			wc_n_blips_25cm = static_cast<float>(_evt.wc_n_blips_25cm);
-			wc_n_blips_50cm = static_cast<float>(_evt.wc_n_blips_50cm);
-			wc_n_blips_100cm = static_cast<float>(_evt.wc_n_blips_100cm);
-
 			// determine whether signal or background, and save
 			if (_evt.wc_particle_classification_v[wc_idx] == Utility::kPionDecay) {
 				isSignal = 1;

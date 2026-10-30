@@ -10,6 +10,10 @@
 #include <TH1F.h>
 #include <TH2F.h>
 #include <TGraph.h>
+#include <TCanvas.h>
+#include <TLegend.h>
+#include <TStyle.h>
+#include <TSystem.h>
 
 #include "../include/EventContainer.h"
 #include "../include/CreateTrainingTree.h"
@@ -38,28 +42,46 @@ void SelectionDriver::runBDTSelectionFull() {
 
 	// lists of file names, weights and types to run over
 	
-	// SURPRISE test samples
-	std::vector<std::string> filename_list = {filename_mc_run4b, filename_dirt_run4b, filename_beamoff_run4b,
-											  //filename_mc_run4c, //filename_dirt_run4c, filename_beamoff_run4c,
-											  //filename_mc_run4d, //filename_dirt_run4d, filename_beamoff_run4d,
-											  //filename_mc_run5//,  filename_dirt_run5, filename_beamoff_run5
-											  };
-	std::vector<double> pot_weight_list = {pot_weight_mc_run4b, pot_weight_dirt_run4b, pot_weight_beamoff_run4b,
-										   pot_weight_mc_run4c,//, pot_weight_dirt_run4c, pot_weight_beamoff_run4c,
-										   pot_weight_mc_run4d,//, pot_weight_dirt_run4d, pot_weight_beamoff_run4d,
-										   pot_weight_mc_run5//,  pot_weight_dirt_run5, pot_weight_beamoff_run5
-										   };
-	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kMC, Utility::kDirt, Utility::kEXT,
-												 		   Utility::kMC,//, Utility::kDirt, Utility::kEXT,
-												           Utility::kMC,//, Utility::kDirt, Utility::kEXT,
-												           Utility::kMC//, Utility::kDirt, Utility::kEXT,
-													    };
-	std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
-															 Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
-															 Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
-															 Utility::kRun4ab, Utility::kRun4ab, Utility::kRun4ab,
-															};
+	// Beam On Only
+	//std::vector<std::string> filename_list= {filename_beamon_run4};
+	//std::vector<double> pot_weight_list = {1.0};
+	//std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kData};
+	//std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun4ab};
 
+	// NuWro Only
+	/*
+	std::vector<std::string> filename_list= {filename_nuwro_run5};
+	std::vector<double> pot_weight_list = {1.0};
+	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kFakeData};
+    std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun4ab};
+	*/
+
+	// SURPRISE MC samples
+	std::vector<std::string> filename_list =  {//filename_mc_run1, //filename_dirt_run1, filename_beamoff_run1,
+											  //filename_mc_run2, //filename_dirt_run2, filename_beamoff_run2,
+											  //filename_mc_run3, //filename_dirt_run3, filename_beamoff_run3,
+											  //filename_mc_run4, //filename_dirt_run4, filename_beamoff_run4,
+											  filename_mc_run5, //filename_dirt_run5, filename_beamoff_run5
+											  };
+	std::vector<double> pot_weight_list = { //pot_weight_mc_run1,  //pot_weight_dirt_run1, pot_weight_beamoff_run1,
+											//pot_weight_mc_run2,  //pot_weight_dirt_run2, pot_weight_beamoff_run2,
+											//pot_weight_mc_run3,  pot_weight_dirt_run3, pot_weight_beamoff_run3,
+		                                  	//pot_weight_mc_run4, //pot_weight_dirt_run4, pot_weight_beamoff_run4,
+										    pot_weight_mc_run5, //pot_weight_dirt_run5, pot_weight_beamoff_run5
+										   };
+	std::vector<Utility::FileTypeEnums> file_types_list = {//Utility::kMC, //Utility::kDirt, Utility::kEXT,
+		 												   //Utility::kMC, //Utility::kDirt, Utility::kEXT,
+												 		   //Utility::kMC, //Utility::kDirt, Utility::kEXT,
+												           //Utility::kMC, //Utility::kDirt, Utility::kEXT,
+												           Utility::kMC, Utility::kDirt, Utility::kEXT
+													    };
+	std::vector<Utility::RunPeriodEnums> run_periods_list = {Utility::kRun4ab, //Utility::kRun4ab, Utility::kRun4ab,
+															 Utility::kRun4ab, //Utility::kRun4ab, Utility::kRun4ab,
+															 Utility::kRun4ab, //Utility::kRun4ab, Utility::kRun4ab,
+															 Utility::kRun4ab, //Utility::kRun4ab, Utility::kRun4ab,
+															 Utility::kRun4ab, //Utility::kRun4ab, Utility::kRun4ab,
+															};
+	
 	// construct classes
 	Selection _selection(_utility);
 	CreateTrainingTree _trainingTree(Utility::kMuonPion);
@@ -72,72 +94,14 @@ void SelectionDriver::runBDTSelectionFull() {
 	StackedHistTool _histStack_nu_vtx_y("", "", 100, -50, 50, _utility);
 	StackedHistTool _histStack_nu_vtx_z("", "", 100, -50, 50, _utility);
 	StackedHistTool _histStack_trk_length("", "", 60, 0, 300, _utility);
-	StackedHistTool _histStack_trk2_length("", "", 60, 0, 300, _utility);
-	StackedHistTool _histStack_trk_score("", "", 20, 0, 1.001, _utility);
-	StackedHistTool _histStack_trk_llrpid("", "", 20, -1, 1.001, _utility);
-	StackedHistTool _histStack_trk_vertex_distance("", "", 15, 0, 15, _utility);
-	StackedHistTool _histStack_topological_score("", "", 20, 0, 1.001, _utility);
-	StackedHistTool _histStack_cosmic_IP("", "", 20, 0, 100, _utility);
-	StackedHistTool _histStack_number_tracks("", "", 6, 0, 6, _utility);
-	StackedHistTool _histStack_number_showers("", "", 6, 0, 6, _utility);
-	StackedHistTool _histStack_n_non_proton_tracks("", "", 6, 0, 6, _utility);
-	StackedHistTool _histStack_n_pion_candidate_tracks("", "", 6, 0, 6, _utility);
 
 	StackedHistTool _histStack_wc_numu_cc_flag("", "", 3, -1.05, 1.05, _utility);
 	StackedHistTool _histStack_vertex_discrepancy("", "", 50, 0, 50, _utility);
 	StackedHistTool _histStack_wc_match_isFC("", "", 2, -0.05, 1.05, _utility);
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_el("", "", 40, -15, 5, _utility);
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_ph("", "", 40, -15, 5, _utility);
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_mu("", "", 40, -15, 5, _utility);
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_pi("", "", 40, -15, 5, _utility);
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_pr("", "", 40, -15, 5, _utility);
-	StackedHistTool _histStack_wc_reco_larpid_procScore_prim("", "", 40, -15, 5, _utility);
-	StackedHistTool _histStack_wc_reco_larpid_procScore_chgd("", "", 40, -15, 5, _utility);
-	StackedHistTool _histStack_wc_reco_larpid_procScore_ntrl("", "", 40, -15, 5, _utility);
-	StackedHistTool _histStack_wc_bdt_score("", "", 20, 0, 1, _utility);
-
-	// per particle stacks
-	StackedHistTool _histStack_trk_length_particle("", "", 30, 0, 300, _utility, "Particle");
-	StackedHistTool _histStack_trk_score_particle("", "", 20, 0, 1.001, _utility, "Particle");
 	
-	StackedHistTool _histStack_trk_llrpid_particle("", "", 20, -1, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_trk_bragg_mu_particle("", "", 20, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_trk_bragg_p_particle("", "", 20, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_trk_bragg_pion_particle("", "", 20, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_trk_bragg_mip_particle("", "", 20, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_trk_dEdx_trunk_particle("", "", 20, 0, 10, _utility, "Particle");
-
-	StackedHistTool _histStack_trk_daughters_particle("", "", 6, 0, 6, _utility, "Particle");
-	StackedHistTool _histStack_trk_end_spacepoints_particle("", "", 50, 0, 500, _utility, "Particle");
-	StackedHistTool _histStack_trk_avg_deflection_stdev_particle("", "", 50, 0, 5e-3, _utility, "Particle");
-	
-	// NuGraph
-	StackedHistTool _histStack_pfng2mipfrac_particle("", "", 20, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_pfng2hipfrac_particle("", "", 20, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_pfng2shrfrac_particle("", "", 20, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_pfng2mclfrac_particle("", "", 20, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_pfng2dfsfrac_particle("", "", 20, 0, 1.001, _utility, "Particle");
-
-	// LArPID
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_el_particle("", "", 40, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_ph_particle("", "", 40, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_mu_particle("", "", 40, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_pi_particle("", "", 40, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_wc_reco_larpid_pidScore_pr_particle("", "", 40, 0, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_wc_reco_larpid_pdg_particle("", "", 2500, 0, 2500, _utility, "Particle");
-
-	StackedHistTool _histStack_wc_larpid_mupi_llr_particle("", "", 40, -1, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_wc_larpid_prpi_llr_particle("", "", 40, -1, 1.001, _utility, "Particle");
-	StackedHistTool _histStack_wc_larpid_prmu_llr_particle("", "", 40, -1, 1.001, _utility, "Particle");
-
 	// Other WC
 	StackedHistTool _histStack_wc_n_pion_candidate_daughters_particle("", "", 6, 0, 6, _utility, "Particle");
 	StackedHistTool _histStack_wc_pion_candidate_daughters_total_energy_particle("", "", 25, 0, 0.5, _utility, "Particle");
-
-	// Blips
-	StackedHistTool _histStack_wc_n_blips_3cm("", "", 25, 0, 25, _utility, "Particle");
-	StackedHistTool _histStack_wc_n_blips_5cm("", "", 25, 0, 25, _utility, "Particle");
-	StackedHistTool _histStack_wc_n_blips_10cm("", "", 15, 0, 30, _utility, "Particle");
 
 	// lantern
 	StackedHistTool _histStack_lantern_vtxScore("", "", 40, 0, 1.001, _utility);
@@ -160,24 +124,55 @@ void SelectionDriver::runBDTSelectionFull() {
 	StackedHistTool _histStack_wc_lantern_candidate_angle_difference("", "", 40, 0, 180, _utility);
 
 	// Observables
-	StackedHistTool _histStack_sel_pion_theta("", "", 40, -1.0, 1.0, _utility);
+	StackedHistTool _histStack_sel_pion_theta("", "", 20, -1.0, 1.0, _utility);
 	StackedHistTool _histStack_sel_pion_phi("", "", 18, -180, 180, _utility);
+	StackedHistTool _histStack_sel_pion_momentum("", "", 40, 0.0, 2.0, _utility);
+	StackedHistTool _histStack_sel_pion_momentum_interaction("", "", 20, 0.0, 1.0, _utility,  "Interaction");
+
+	StackedHistTool _histStack_sel_proton_theta("", "", 20, -1.0, 1.0, _utility);													
+	StackedHistTool _histStack_sel_proton_momentum("", "", 40, 0, 2, _utility);
+
+	StackedHistTool _histStack_sel_sideband_larpidScore("", "", 20, -1, 1.001, _utility, "Particle");
 
 	// resolution plots
 	TH1F *pionMomentum1D = new TH1F("", "", 50, -1.0, 1.0);														
 	TH2F *pionMomentum2D = new TH2F("", "", 20, 0, 2.0, 20, 0, 2.0);
 
-	TH2F *pionTheta2D = new TH2F("", "", 40, -1.0, 1.0, 40, -1.0, 1.0);
+	TH1F *pionTheta1D = new TH1F("", "", 50, -1.0, 1.0);	
+	TH2F *pionTheta2D = new TH2F("", "", 20, -1.0, 1.0, 20, -1.0, 1.0);
 
 	// dE/dx vs residual range histogram
 	TH2F *dEdx_vs_ResRange = new TH2F("", "", 100, 0, 200, 100, 0, 10);
 	PhysdEdx _physdedx(13); // == muon
-	
+
+	// create output root file for signal momentum and angle
+	TFile outputFile("binningTree.root", "RECREATE");
+	TTree binningTree("Events", "Example event tree");
+	double sel_pion_momentum = 0;
+	double sel_pion_theta = 0;
+	double sel_pion_phi = 0;
+	binningTree.Branch("sel_pion_momentum", &sel_pion_momentum, "sel_pion_momentum/D");
+	binningTree.Branch("sel_pion_theta", &sel_pion_theta, "sel_pion_theta/D");
+	binningTree.Branch("sel_pion_phi", &sel_pion_phi, "sel_pion_phi/D");
+	double true_pion_momentum = 0;
+	double true_pion_theta = 0;
+	double true_pion_phi = 0;
+	binningTree.Branch("true_pion_momentum", &true_pion_momentum, "true_pion_momentum/D");
+	binningTree.Branch("true_pion_theta", &true_pion_theta, "true_pion_theta/D");
+	binningTree.Branch("true_pion_phi", &true_pion_phi, "true_pion_phi/D");
+	double binning_weight = 0;
+	binningTree.Branch("weight", &binning_weight, "weight/D");													
+
 	// Counters
 	int n_data_pass = 0;
 	double n_signal_all = 0;
 	double n_signal_pass = 0;
 	double n_total_pass = 0;
+
+	double n_signal_0p = 0;
+	double n_signal_Np = 0;
+	double n_signal_0p_pass = 0;
+	double n_signal_Np_pass = 0;
 
 	double n_signal_decay = 0;
 	double n_signal_absorption0p = 0;
@@ -289,7 +284,7 @@ void SelectionDriver::runBDTSelectionFull() {
 		    // bool passSelection = _selection.ApplyCutBasedSelection(_event, file_types_list[idx], run_periods_list[idx]);
 			// WC LArPID selection
 			//bool passSelection = _selection.ApplyWCSelection(_event, file_types_list[idx], run_periods_list[idx]);
-			
+
 			// Lantern selection
 			bool passSelection = _selection.ApplyLanternSelection(_event, file_types_list[idx], run_periods_list[idx]);
 			
@@ -301,6 +296,13 @@ void SelectionDriver::runBDTSelectionFull() {
 			if (_event.classification == Utility::kNC1pi) {
 				n_signal_all += pot_weight * _event.weight_cv;
 
+				if (_event.mc_NProtons_ == 0) {
+					n_signal_0p += pot_weight * _event.weight_cv;
+				}
+				else if (_event.mc_NProtons_ > 0) {
+					n_signal_Np += pot_weight * _event.weight_cv;
+				}
+				
 				if (_event.truePionHasMuon) {
 					n_signal_decay += pot_weight * _event.weight_cv;
 				}
@@ -312,6 +314,9 @@ void SelectionDriver::runBDTSelectionFull() {
 				}
 				else if (_event.truePionNProtons > 0) {
 					n_signal_absorptionNp += pot_weight * _event.weight_cv;
+				}
+				else {
+					std::cout << "Unclassified Pion!" << std::endl;
 				}
 				
 				/*
@@ -338,21 +343,30 @@ void SelectionDriver::runBDTSelectionFull() {
 				*/
 			}
 		    
-		    if (!passSelection) continue;
-			//if (!_event.sel_CC0piFarSideband_) continue;
+		    //if (!passSelection) continue;
+			if (!_event.sel_CC0piFarSideband_) continue;
 			//if (!_event.sel_CC0piNearSideband_) continue;
 			//if (!_event.sel_CC1piSideband_) continue;
 			//if (!_event.sel_NCNpSideband_) continue;
 		   
+			
 		    if (file_types_list[idx] == Utility::kData) {
 		    	n_data_pass++;
 		    	std::cout << "Passing data event -- " << "Run: " << _event.run << ", Subrun: " << _event.sub << ", Event: " << _event.evt << ", Electron energy: " << _event.shr_energy_cali << ", Visible energy: " << _event.NeutrinoEnergy2/1000 << " GeV" << std::endl;
 		    	continue;
 		    }
+			
 
 			// increment passing signal counter
 			if (_event.classification == Utility::kNC1pi) {
 				n_signal_pass += pot_weight * _event.weight_cv;
+
+				if (_event.mc_NProtons_ == 0) {
+					n_signal_0p_pass += pot_weight * _event.weight_cv;
+				}
+				else if (_event.mc_NProtons_ > 0) {
+					n_signal_Np_pass += pot_weight * _event.weight_cv;
+				}
 
 				if (_event.truePionHasMuon) {
 					n_signal_pass_decay += pot_weight * _event.weight_cv;
@@ -370,26 +384,8 @@ void SelectionDriver::runBDTSelectionFull() {
 					
 				}
 
-				/*
 				// Print out RSE:
-				std::cout << "Signal Event Run: " << _event.run << ", Subrun: " << _event.sub << ", Event: " << _event.evt;
-
-				// check WC candidate backtracked PDG
-				std::cout << ", Backtracked PDG: " << _event.wc_particle_classification_v[_event.wc_pion_candidate_index];
-
-				// track length
-				float wc_track_length = std::sqrt(
-				std::pow(_event.wc_reco_startXYZT[_event.wc_pion_candidate_index][0] - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][0], 2) +
-				std::pow(_event.wc_reco_startXYZT[_event.wc_pion_candidate_index][1] - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][1], 2) +
-				std::pow(_event.wc_reco_startXYZT[_event.wc_pion_candidate_index][2] - _event.wc_reco_endXYZT[_event.wc_pion_candidate_index][2], 2) );
-				std::cout << ", Length: " << wc_track_length;
-
-				// truth momentum
-				std::cout << ", Truth Pion Momentum: " << _event.mc_pion_momentum_;
-
-				// reconstructd pion momentum
-				std::cout << ", Reconstructed Pion Momentum: Range = " << _event.pionMomentumRange << ", Hypfit: " << _event.pionMomentumHypfit << std::endl;
-				*/
+				//std::cout << "Signal Event Run: " << _event.run << ", Subrun: " << _event.sub << ", Event: " << _event.evt;
 
 				/*
 				// truth pion process
@@ -418,8 +414,51 @@ void SelectionDriver::runBDTSelectionFull() {
 			n_total_pass += pot_weight * _event.weight_cv;
 
 			// fill observables for passing events
+			if (file_types_list[idx] != Utility::kData) {
+			
 			_histStack_sel_pion_theta.Fill(_event.classification, _event.sel_pion_theta_, pot_weight * _event.weight_cv);
+			_histStack_sel_proton_theta.Fill(_event.classification, _event.sel_proton_theta_, pot_weight * _event.weight_cv);
+
 			_histStack_sel_pion_phi.Fill(_event.classification, (_event.sel_pion_phi_)*180/3.1416, pot_weight * _event.weight_cv);
+			
+			// [testing] truth momentum
+			/*
+			if (_event.classification == Utility::kNC1pi) {
+			//if (_event.classification == Utility::kCCNumu0pi) {
+
+				// find true muon, matching signal thresholds (pion with momentum > 100 MeV)
+				int truth_muon_index = -1;
+				double truth_muon_momentum = -1;
+				for (int i = 0; i < _event.mc_pdg_v->size(); i++) {
+					
+					// momentum
+					double mc_momentum = std::sqrt( pow(_event.mc_px_v->at(i),2) + 
+													pow(_event.mc_py_v->at(i),2) + 
+													pow(_event.mc_pz_v->at(i),2) );
+
+					// pion
+					//if ((_event.mc_pdg_v->at(i) == 13 || _event.mc_pdg_v->at(i) == -13) && mc_momentum > 0.1) {
+					if ((_event.mc_pdg_v->at(i) == 211 || _event.mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) {
+						truth_muon_index = i;
+						truth_muon_momentum = mc_momentum;
+						break;
+					}						
+				}
+
+				_histStack_sel_pion_momentum.Fill(_event.classification, truth_muon_momentum, pot_weight * _event.weight_cv);
+			}
+			*/
+			
+			
+			_histStack_sel_pion_momentum.Fill(_event.classification, _event.sel_pion_momentum_, pot_weight * _event.weight_cv);
+			//_histStack_sel_pion_momentum.Fill(_event.classification, _event.mc_pion_momentum_, pot_weight * _event.weight_cv);
+			_histStack_sel_pion_momentum_interaction.Fill(_event.interactionMode, _event.sel_pion_momentum_, pot_weight * _event.weight_cv);
+
+			// proton momentum
+			_histStack_sel_proton_momentum.Fill(_event.classification, _event.sel_proton_momentum_, pot_weight * _event.weight_cv);
+
+			_histStack_sel_sideband_larpidScore.Fill(_event.sel_CC1piSideband_track_classification_, _event.sel_CC1piSideband_track_larpidScore_, pot_weight * _event.weight_cv);
+			
 
 		    // fill histogram(s) - pelee variables
 		    _histStack_contained_fraction.Fill(_event.classification, _event.contained_fraction, pot_weight * _event.weight_cv);
@@ -427,86 +466,21 @@ void SelectionDriver::runBDTSelectionFull() {
 			//_histStack_nu_vtx_x.Fill(_event.classification, _event.true_nu_vtx_sce_x - _event.lantern_trueVtxX, pot_weight * _event.weight_cv);
 			_histStack_nu_vtx_x.Fill(_event.classification, _event.wc_reco_nuvtxX , pot_weight * _event.weight_cv);
 			_histStack_nu_vtx_y.Fill(_event.classification, _event.wc_reco_nuvtxY, pot_weight * _event.weight_cv);
-			_histStack_nu_vtx_z.Fill(_event.classification, _event.wc_reco_nuvtxZ, pot_weight * _event.weight_cv);	    
-			_histStack_topological_score.Fill(_event.classification, _event.topological_score, pot_weight * _event.weight_cv);
-			_histStack_cosmic_IP.Fill(_event.classification, _event.CosmicIPAll3D, pot_weight * _event.weight_cv);		
-			_histStack_number_tracks.Fill(_event.classification, _event.n_primary_tracks, pot_weight * _event.weight_cv);
-			_histStack_number_showers.Fill(_event.classification, _event.n_primary_showers, pot_weight * _event.weight_cv);
-			_histStack_trk_llrpid.Fill(_event.classification, _event.trk2_llr_pid_score, pot_weight * _event.weight_cv);
-			_histStack_trk_score.Fill(_event.classification, _event.trk_score, pot_weight * _event.weight_cv);
+			_histStack_nu_vtx_z.Fill(_event.classification, _event.wc_reco_nuvtxZ, pot_weight * _event.weight_cv);
 
 			if (_event.classification == Utility::kNC1pi) {
 				_histStack_single_bin_interaction.Fill(_event.interactionMode, _event.contained_fraction, pot_weight * _event.weight_cv);
 			}
 
-			_histStack_n_non_proton_tracks.Fill(_event.classification, _event.n_non_proton_tracks, pot_weight * _event.weight_cv);
-			_histStack_n_pion_candidate_tracks.Fill(_event.classification, _event.n_pion_candidate_tracks, pot_weight * _event.weight_cv);
-			
 			// fill histogram(s) - WC variables
 			_histStack_wc_numu_cc_flag.Fill(_event.classification, _event.wc_numu_cc_flag, pot_weight * _event.weight_cv);
 			_histStack_vertex_discrepancy.Fill(_event.classification, _event.vertex_discrepancy, pot_weight * _event.weight_cv);
 			_histStack_wc_match_isFC.Fill(_event.classification, _event.wc_match_isFC, pot_weight * _event.weight_cv);
 
-			_histStack_trk_length.Fill(_event.classification, _event.wc_primaryTrackLength, pot_weight * _event.weight_cv);
-			_histStack_trk2_length.Fill(_event.classification, _event.trk2_len, pot_weight * _event.weight_cv);
-			_histStack_trk_vertex_distance.Fill(_event.classification, _event.lantern_primaryTrackVertexSeparation, pot_weight * _event.weight_cv);
-
-			_histStack_wc_reco_larpid_pidScore_el.Fill(_event.classification, _event.wc_reco_larpid_pidScore_el[_event.wc_pion_candidate_index], pot_weight * _event.weight_cv);
-			_histStack_wc_reco_larpid_pidScore_ph.Fill(_event.classification, _event.wc_reco_larpid_pidScore_ph[_event.wc_pion_candidate_index], pot_weight * _event.weight_cv);
-			_histStack_wc_reco_larpid_pidScore_mu.Fill(_event.classification, _event.wc_reco_larpid_pidScore_mu[_event.wc_pion_candidate_index], pot_weight * _event.weight_cv);
-			_histStack_wc_reco_larpid_pidScore_pi.Fill(_event.classification, _event.wc_reco_larpid_pidScore_pi[_event.wc_pion_candidate_index], pot_weight * _event.weight_cv);
-			_histStack_wc_reco_larpid_pidScore_pr.Fill(_event.classification, _event.wc_reco_larpid_pidScore_pr[_event.wc_pion_candidate_index], pot_weight * _event.weight_cv);
-			_histStack_wc_reco_larpid_procScore_prim.Fill(_event.classification, _event.wc_reco_larpid_procScore_prim[_event.wc_pion_candidate_index], pot_weight * _event.weight_cv);
-			_histStack_wc_reco_larpid_procScore_chgd.Fill(_event.classification, _event.wc_reco_larpid_procScore_chgd[_event.wc_pion_candidate_index], pot_weight * _event.weight_cv);
-			_histStack_wc_reco_larpid_procScore_ntrl.Fill(_event.classification, _event.wc_reco_larpid_procScore_ntrl[_event.wc_pion_candidate_index], pot_weight * _event.weight_cv);
-
 			// lantern
 			_histStack_lantern_vtxScore.Fill(_event.classification, _event.lantern_vtxScore, pot_weight * _event.weight_cv);
 			_histStack_lantern_vtxContainment.Fill(_event.classification, _event.lantern_vtxContainment, pot_weight * _event.weight_cv);
 			_histStack_lantern_vtxFracHitsOnCosmic.Fill(_event.classification, _event.lantern_vtxFracHitsOnCosmic, pot_weight * _event.weight_cv);
-
-			// BDT
-			_histStack_wc_bdt_score.Fill(_event.classification, _event.wc_bdt_score, pot_weight * _event.weight_cv);
-
-			// fill histogram(s) - per particle
-			// loop through primary tracks
-			for (unsigned int i_trk = 0; i_trk < _event.trk_sce_start_x_v->size(); i_trk++) {			
-		
-				// check if track is primary
-				if (_event.pfp_generation_v->at(i_trk) != 2) continue;
-
-				// hits on all planes
-				if (_event.pfnplanehits_U->at(i_trk) == 0 || _event.pfnplanehits_V->at(i_trk) == 0 || _event.pfnplanehits_Y->at(i_trk) == 0) continue;
-				
-				// track score
-				if (_event.trk_score_v->at(i_trk) < 0.5) continue;
-
-				// vertex distance
-				if (_event.trk_distance_v->at(i_trk) > 4) continue; // 4cm
-
-				// track length
-				if (_event.trk_len_v->at(i_trk) < 5) continue; // 10cm
-				if (_event.trk_len_v->at(i_trk) > 150) continue; // 200cm
-
-				// fill
-				//_histStack_trk_length_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_len_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_score_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_score_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_llrpid_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_llr_pid_score_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_bragg_mu_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_bragg_mu_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_bragg_p_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_bragg_p_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_bragg_pion_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_bragg_pion_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_bragg_mip_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_bragg_mip_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_dEdx_trunk_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_trunk_dEdx_y_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_daughters_particle.Fill(_event.pfp_classification_v[i_trk], _event.pfp_trk_daughters_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_end_spacepoints_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_end_spacepoints_v->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_trk_avg_deflection_stdev_particle.Fill(_event.pfp_classification_v[i_trk], _event.trk_avg_deflection_stdev_v->at(i_trk), pot_weight * _event.weight_cv);
-				// NuGraph
-				_histStack_pfng2mipfrac_particle.Fill(_event.pfp_classification_v[i_trk], _event.pfng2mipfrac->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_pfng2hipfrac_particle.Fill(_event.pfp_classification_v[i_trk], _event.pfng2hipfrac->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_pfng2shrfrac_particle.Fill(_event.pfp_classification_v[i_trk], _event.pfng2shrfrac->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_pfng2mclfrac_particle.Fill(_event.pfp_classification_v[i_trk], _event.pfng2mclfrac->at(i_trk), pot_weight * _event.weight_cv);
-				_histStack_pfng2dfsfrac_particle.Fill(_event.pfp_classification_v[i_trk], _event.pfng2dfsfrac->at(i_trk), pot_weight * _event.weight_cv);
-			}
 
 			// fill histogram(s) - WC per particle
 			for (unsigned int wc_idx = 0; wc_idx < _event.wc_reco_Ntrack; wc_idx++) {
@@ -523,63 +497,16 @@ void SelectionDriver::runBDTSelectionFull() {
 				// check primary
 				if (_event.wc_reco_mother[wc_idx] != 0) continue; // require WC primary track
 
-				// track length
-				// calculate track length
-				float wc_track_length = std::sqrt(
-				std::pow(_event.wc_reco_startXYZT[wc_idx][0] - _event.wc_reco_endXYZT[wc_idx][0], 2) +
-				std::pow(_event.wc_reco_startXYZT[wc_idx][1] - _event.wc_reco_endXYZT[wc_idx][1], 2) +
-				std::pow(_event.wc_reco_startXYZT[wc_idx][2] - _event.wc_reco_endXYZT[wc_idx][2], 2) );
-
-				// track length
-			    if (wc_track_length < 5.0) continue; // 10cm
-
-				// track separation from vertex
-				float wc_TrackVertexSeparation = std::sqrt(
-				std::pow(_event.wc_reco_startXYZT[wc_idx][0] - _event.wc_reco_nuvtxX, 2) +
-				std::pow(_event.wc_reco_startXYZT[wc_idx][1] - _event.wc_reco_nuvtxY, 2) +
-				std::pow(_event.wc_reco_startXYZT[wc_idx][2] - _event.wc_reco_nuvtxZ, 2) );
-
-				if (wc_TrackVertexSeparation > 5.0) continue; // 5cm
-
-				// fill histograms
-				//_histStack_trk_length_particle.Fill(_event.wc_particle_classification_v[wc_idx], wc_track_length, pot_weight * _event.weight_cv);
-
-				// LArPID unclassified tracks
-				if (_event.wc_reco_larpid_classified[wc_idx] == 0) continue; // only fill for classified tracks				
-
 				// skip WC pseudo-particles
 				if (_event.wc_reco_pdg[wc_idx] == 22 || _event.wc_reco_pdg[wc_idx] == 2112) continue; // skip pseudo-particles
 
 				// fill histograms
-				// vertex distance
-				_histStack_trk_length_particle.Fill(_event.wc_particle_classification_v[wc_idx], wc_track_length, pot_weight * _event.weight_cv);
+				
 				// Other WC
 				_histStack_wc_n_pion_candidate_daughters_particle.Fill(_event.wc_particle_classification_v[wc_idx], _event.wc_n_pion_candidate_daughters, pot_weight * _event.weight_cv);
 				if (_event.wc_n_pion_candidate_daughters > 0) {
 					_histStack_wc_pion_candidate_daughters_total_energy_particle.Fill(_event.wc_particle_classification_v[wc_idx], _event.wc_pion_candidate_daughters_total_energy, pot_weight * _event.weight_cv);
 				}
-				// Blips
-				_histStack_wc_n_blips_3cm.Fill(_event.wc_particle_classification_v[wc_idx], _event.wc_n_blips_25cm, pot_weight * _event.weight_cv);
-				_histStack_wc_n_blips_5cm.Fill(_event.wc_particle_classification_v[wc_idx], _event.wc_n_blips_50cm, pot_weight * _event.weight_cv);
-				_histStack_wc_n_blips_10cm.Fill(_event.wc_particle_classification_v[wc_idx], _event.wc_n_blips_100cm, pot_weight * _event.weight_cv);
-					
-				// LARPID
-				_histStack_wc_reco_larpid_pidScore_el_particle.Fill(_event.wc_particle_classification_v[wc_idx], std::exp(_event.wc_reco_larpid_pidScore_el[wc_idx]), pot_weight * _event.weight_cv);
-				_histStack_wc_reco_larpid_pidScore_ph_particle.Fill(_event.wc_particle_classification_v[wc_idx], std::exp(_event.wc_reco_larpid_pidScore_ph[wc_idx]), pot_weight * _event.weight_cv);
-				_histStack_wc_reco_larpid_pidScore_mu_particle.Fill(_event.wc_particle_classification_v[wc_idx], std::exp(_event.wc_reco_larpid_pidScore_mu[wc_idx]), pot_weight * _event.weight_cv);
-				_histStack_wc_reco_larpid_pidScore_pi_particle.Fill(_event.wc_particle_classification_v[wc_idx], std::exp(_event.wc_reco_larpid_pidScore_pi[wc_idx]), pot_weight * _event.weight_cv);
-				_histStack_wc_reco_larpid_pidScore_pr_particle.Fill(_event.wc_particle_classification_v[wc_idx], std::exp(_event.wc_reco_larpid_pidScore_pr[wc_idx]), pot_weight * _event.weight_cv);
-				_histStack_wc_reco_larpid_pdg_particle.Fill(_event.wc_particle_classification_v[wc_idx], _event.wc_reco_pdg[wc_idx], pot_weight * _event.weight_cv);
-
-				// LARPID LLR
-				double mu_pi_llr_norm = std::tanh(0.5 * (_event.wc_reco_larpid_pidScore_pi[wc_idx] - _event.wc_reco_larpid_pidScore_mu[wc_idx]));
-				double pr_pi_llr_norm = std::tanh(0.5 * (_event.wc_reco_larpid_pidScore_pi[wc_idx] - _event.wc_reco_larpid_pidScore_pr[wc_idx]));
-				double pr_mu_llr_norm = std::tanh(0.5 * (_event.wc_reco_larpid_pidScore_mu[wc_idx] - _event.wc_reco_larpid_pidScore_pr[wc_idx]));	
-
-				_histStack_wc_larpid_mupi_llr_particle.Fill(_event.wc_particle_classification_v[wc_idx], mu_pi_llr_norm, pot_weight * _event.weight_cv);
-				_histStack_wc_larpid_prpi_llr_particle.Fill(_event.wc_particle_classification_v[wc_idx], pr_pi_llr_norm, pot_weight * _event.weight_cv);
-				_histStack_wc_larpid_prmu_llr_particle.Fill(_event.wc_particle_classification_v[wc_idx], pr_mu_llr_norm, pot_weight * _event.weight_cv);
-
 			}
 
 			// lantern candidate particle
@@ -611,17 +538,6 @@ void SelectionDriver::runBDTSelectionFull() {
 
 				if (_event.lantern_trackClassified[idx_track] == 0) continue; // only fill for classified tracks
 
-				/*
-				std::cout << "CC Numu Npi Event RSE: " << _event.run << "-" << _event.sub << "-" << _event.evt 
-						  << " -- Lantern Track Index: " << idx_track 
-						  << ", True PID: " << _event.lantern_trackTruePID[idx_track]
-						  << ", Length: " << track_length
-						  << ", Mu Score: " << std::exp(_event.lantern_trackMuScore[idx_track])
-						  << ", Pi Score: " << std::exp(_event.lantern_trackPiScore[idx_track])
-						  << ", Pr Score: " << std::exp(_event.lantern_trackPrScore[idx_track])
-						  << std::endl;
-				*/
-
 				double mu_pi_llr_norm = std::tanh(0.5 * (_event.lantern_trackPiScore[idx_track] - _event.lantern_trackMuScore[idx_track]));
 				double pr_pi_llr_norm = std::tanh(0.5 * (_event.lantern_trackPiScore[idx_track] - _event.lantern_trackPrScore[idx_track]));
 				double pr_mu_llr_norm = std::tanh(0.5 * (_event.lantern_trackMuScore[idx_track] - _event.lantern_trackPrScore[idx_track]));	
@@ -629,7 +545,7 @@ void SelectionDriver::runBDTSelectionFull() {
 
 				Utility::ParticleEnums particle_class = _event.lantern_particle_classification_v[idx_track];
 				// group pion final state processes, testing
-				
+	
 				if (particle_class == Utility::kPionAbsorption0p ||
 					particle_class == Utility::kPionAbsorptionNp ||
 					particle_class == Utility::kPionChargeExchange) {
@@ -681,8 +597,6 @@ void SelectionDriver::runBDTSelectionFull() {
 			    _histStack_lantern_larpid_pidScore_pi_particle.Fill(particle_class, std::exp(_event.lantern_trackPiScore[idx_track]), pot_weight * _event.weight_cv);
 			    _histStack_lantern_larpid_pidScore_pr_particle.Fill(particle_class, std::exp(_event.lantern_trackPrScore[idx_track]), pot_weight * _event.weight_cv);
 
-				//std::cout << "Original: " << _event.lantern_trackPiScore[idx_track] << ", Log: " << std::log(_event.lantern_trackPiScore[idx_track]) << ", Exp: " << std::exp(_event.lantern_trackPiScore[idx_track]) << std::endl;
-
 				_histStack_lantern_larpid_pidScore_mu.Fill(_event.classification, std::exp(_event.lantern_trackMuScore[idx_track]), pot_weight * _event.weight_cv);
 				_histStack_lantern_larpid_pidScore_pi.Fill(_event.classification, std::exp(_event.lantern_trackPiScore[idx_track]), pot_weight * _event.weight_cv);
 				_histStack_lantern_larpid_pidScore_pr.Fill(_event.classification, std::exp(_event.lantern_trackPrScore[idx_track]), pot_weight * _event.weight_cv);
@@ -716,14 +630,32 @@ void SelectionDriver::runBDTSelectionFull() {
 				//std::cout << "Truth Pion Momentum: " << truth_pion_momentum << ", Reco Pion Momentum (Hypfit): " << _event.pionMomentumHypfit << ", Reco Pion Momentum (Range): " << _event.pionMomentumRange << std::endl;
 
 				// check hypfit, populate histograms if reasonable (for testing)
-				//if (_utility.isNumber(_event.pionMomentumHypfit) && _event.pionMomentumHypfit > 0 && _event.pionMomentumHypfit < 5) {
-				pionMomentum1D->Fill((_event.sel_pion_momentum_ - truth_pion_momentum) / truth_pion_momentum);
-				pionMomentum2D->Fill(truth_pion_momentum, _event.sel_pion_momentum_);
-				//}
+				if (_utility.isNumber(_event.pionMomentumHypfit) && _event.pionMomentumHypfit > 0 && _event.pionMomentumHypfit < 2) {
+					pionMomentum1D->Fill((_event.pionMomentumHypfit - truth_pion_momentum) / truth_pion_momentum);
+					pionMomentum2D->Fill(truth_pion_momentum, _event.pionMomentumHypfit);
+				}
+				else {
+					pionMomentum1D->Fill((_event.pionMomentumRange - truth_pion_momentum) / truth_pion_momentum);
+					pionMomentum2D->Fill(truth_pion_momentum, _event.pionMomentumRange);
+				}
 				
 
 				// fill resolution plots
+				pionTheta1D->Fill((_event.sel_pion_theta_ - _event.mc_pion_theta_) / _event.mc_pion_theta_);
 				pionTheta2D->Fill(_event.mc_pion_theta_, _event.sel_pion_theta_, pot_weight * _event.weight_cv);
+
+				// fill binning tree
+				sel_pion_theta = _event.sel_pion_theta_;
+				sel_pion_phi = _event.sel_pion_phi_;
+				sel_pion_momentum = _event.sel_pion_momentum_;
+				true_pion_theta = _event.mc_pion_theta_;
+				true_pion_phi = _event.mc_pion_phi_;
+				true_pion_momentum = _event.mc_pion_momentum_;
+				binning_weight = pot_weight * _event.weight_cv;
+				
+
+				//binningTree.Fill();
+
 			}
 
 			// populate WC/Lantern candidate consistency histograms
@@ -747,19 +679,14 @@ void SelectionDriver::runBDTSelectionFull() {
 					std::pow(wc_candidate_end[2] - lantern_candidate_end[2], 2) );
 				
 			    // calculate angle between WC and Lantern candidates, in degrees
-				float wc_candidate_vector[3] = {wc_candidate_end[0] - wc_candidate_start[0], wc_candidate_end[1] - wc_candidate_start[1], wc_candidate_end[2] - wc_candidate_start[2]};
-				float lantern_candidate_vector[3] = {lantern_candidate_end[0] - lantern_candidate_start[0], lantern_candidate_end[1] - lantern_candidate_start[1], lantern_candidate_end[2] - lantern_candidate_start[2]};
-
-				// calculate dot product of vectors
-				float dot_product = wc_candidate_vector[0]*lantern_candidate_vector[0] + wc_candidate_vector[1]*lantern_candidate_vector[1] + wc_candidate_vector[2]*lantern_candidate_vector[2];
-				// calculate magnitudes of vectors
-				float wc_magnitude = std::sqrt(wc_candidate_vector[0]*wc_candidate_vector[0] + wc_candidate_vector[1]*wc_candidate_vector[1] + wc_candidate_vector[2]*wc_candidate_vector[2]);
-				float lantern_magnitude = std::sqrt(lantern_candidate_vector[0]*lantern_candidate_vector[0] + lantern_candidate_vector[1]*lantern_candidate_vector[1] + lantern_candidate_vector[2]*lantern_candidate_vector[2]);
-				// calculate angle in radians
-				float angle_rad = 0;
-				if (wc_magnitude > 0 && lantern_magnitude > 0) {
-					angle_rad = std::acos(dot_product / (wc_magnitude * lantern_magnitude));
-				}
+				// lantern
+				TVector3 lantern_start_direction(_event.lantern_trackStartDirX[_event.lantern_pion_candidate_index], _event.lantern_trackStartDirY[_event.lantern_pion_candidate_index], _event.lantern_trackStartDirZ[_event.lantern_pion_candidate_index]);
+				lantern_start_direction = lantern_start_direction.Unit();
+				// WC
+				TVector3 wc_start_direction(_event.wc_reco_startMomentum[_event.wc_pion_candidate_index][0], _event.wc_reco_startMomentum[_event.wc_pion_candidate_index][1], _event.wc_reco_startMomentum[_event.wc_pion_candidate_index][2]);
+				wc_start_direction = wc_start_direction.Unit();
+				// angle (radians)
+				float angle_rad = lantern_start_direction.Angle(wc_start_direction);
 				// convert to degrees
 				float angle_deg = angle_rad * 180. / M_PI;
 
@@ -769,11 +696,12 @@ void SelectionDriver::runBDTSelectionFull() {
 				_histStack_wc_lantern_candidate_angle_difference.Fill(_event.classification, angle_deg, pot_weight * _event.weight_cv);
 			}
 
+			} // End of kData Restriction
 
 			// Energy Scale Tests
 			/*
 			// CC 0pi sample
-			if (_event.classification == Utility::kCCNumu0pi) {
+			//if (_event.classification == Utility::kCCNumu0pi) {
 			
 				// get candidate track ID
 				int recoID = _event.wc_reco_id[_event.wc_pion_candidate_index];
@@ -855,7 +783,7 @@ void SelectionDriver::runBDTSelectionFull() {
 					dEdx_vs_ResRange->Fill(sp_rr, sp_dEdx);
 				}
 				
-			}
+			//}
 			*/
 		}
 
@@ -864,11 +792,47 @@ void SelectionDriver::runBDTSelectionFull() {
 		delete f;
 	}
 
-	// write training tree
-	std::cout << "Writing BDT training tree." << std::endl;
-	_trainingTree.writeOutputFile();
+	// write binning tree
+	std::cout << "Writing binning tree." << std::endl;
+	outputFile.cd();
+	binningTree.Write();
+	outputFile.Close();
 
 	std::cout << "Passing Data Events: " << n_data_pass << std::endl;
+
+	/*
+	// draw dE/dx vs residual range plot
+	TCanvas *res4 = new TCanvas("res4", "res4", 1080, 1080);
+	res4->cd();
+	dEdx_vs_ResRange->GetXaxis()->SetTitle("Residual Range [cm]");
+	dEdx_vs_ResRange->GetYaxis()->SetTitle("dE/dx [MeV/cm]");
+	dEdx_vs_ResRange->Draw("COLZ");
+
+	// create theoretical prediction
+	std::vector<double> rr_vals;
+	std::vector<double> mpv_dedx_vals;
+
+	double pitch = 0.6; // cm
+
+	for (int i = 0; i < 330; i++) {
+		double rr = i*pitch;
+		double KE = _physdedx.KEFromRangeSpline(rr);
+		double mpv_dedx = _physdedx.MPVdEdx(KE, pitch);
+
+		rr_vals.push_back(rr);
+		mpv_dedx_vals.push_back(mpv_dedx);
+
+	}
+
+	// draw as TGraph
+	TGraph *graph = new TGraph(mpv_dedx_vals.size(), &rr_vals[0], &mpv_dedx_vals[0]);
+	graph->SetLineColor(kBlack);
+	graph->SetLineStyle(9);
+	graph->SetLineWidth(3);
+	graph->Draw("L same");
+
+	res4->Print("plots/plot_dEdx_vs_ResRange.root");
+	*/
 
 	std::cout << "Pion Candidate Count (Lantern): " << pion_counter << std::endl;
 	std::cout << "Muon Candidate Count (Lantern): " << muon_counter << std::endl;
@@ -896,6 +860,11 @@ void SelectionDriver::runBDTSelectionFull() {
 	std::cout << "Signal Pass: " << n_signal_pass << std::endl;
 	std::cout << "Total Pass: " << n_total_pass << std::endl;
 
+	std::cout << "Signal 0p: " << n_signal_0p << std::endl;
+	std::cout << "Signal Np: " << n_signal_Np << std::endl;
+	std::cout << "Signal 0p pass: " << n_signal_0p_pass << std::endl;
+	std::cout << "Signal Np pass: " << n_signal_Np_pass << std::endl;
+
 	std::cout << "Signal Pion Decay: " << n_signal_decay << ", Efficiency = " << (n_signal_pass_decay / n_signal_decay) * 100 << "%" << std::endl;
 	std::cout << "Signal Pion Absorption 0p: " << n_signal_absorption0p << ", Efficiency = " << (n_signal_pass_absorption0p / n_signal_absorption0p) * 100 << "%" << std::endl;
 	std::cout << "Signal Pion Absorption Np: " << n_signal_absorptionNp << ", Efficiency = " << (n_signal_pass_absorptionNp / n_signal_absorptionNp) * 100 << "%" << std::endl;
@@ -903,6 +872,9 @@ void SelectionDriver::runBDTSelectionFull() {
 
 	std::cout << "Efficiency: " << (n_signal_pass / n_signal_all) * 100 << std::endl;
 	std::cout << "Purity: " << (n_signal_pass / n_total_pass) * 100 << std::endl;
+
+	std::cout << "Efficiency 0p: " << (n_signal_0p_pass / n_signal_0p) * 100 << std::endl;
+	std::cout << "Efficiency Np: " << (n_signal_Np_pass / n_signal_Np) * 100 << std::endl;
 	
 	// draw histograms
 
@@ -932,62 +904,8 @@ void SelectionDriver::runBDTSelectionFull() {
 	TCanvas *c3b = new TCanvas("c3b", "c3b", 1080, 1080);
   	c3b->cd();
   	_histStack_nu_vtx_z.DrawStack(c3b, Utility::kNuVtxZ);
-  	c3b->Print("plots/plot_nu_vtx_z.root");
+  	c3b->Print("plots/plot_nu_vtx_z.root");  	
 
-  	TCanvas *c5 = new TCanvas("c5", "c5", 1080, 1080);
-  	c5->cd();
-  	_histStack_topological_score.DrawStack(c5, Utility::kTopologicalScore);
-  	c5->Print("plots/plot_topological_score.root");
-
-  	TCanvas *c6 = new TCanvas("c6", "c6", 1080, 1080);
-  	c6->cd();
-  	_histStack_cosmic_IP.DrawStack(c6, Utility::kCosmicImpactParameter);
-  	c6->Print("plots/plot_cosmic_IP.root");
-
-  	TCanvas *c6b = new TCanvas("c6b", "c6b", 1080, 1080);
-  	c6b->cd();
-  	_histStack_number_tracks.DrawStack(c6b, Utility::kNTrack);
-  	c6b->Print("plots/plot_number_tracks.root");
-
-	TCanvas *c6c = new TCanvas("c6c", "c6c", 1080, 1080);
-  	c6c->cd();
-  	_histStack_number_showers.DrawStack(c6c, Utility::kNShower);
-  	c6c->Print("plots/plot_number_showers.root");  	
-
-  	TCanvas *c8 = new TCanvas("c8", "c8", 1080, 1080);
-  	c8->cd();
-  	_histStack_trk_length.DrawStack(c8, Utility::kTrackLength);
-  	c8->Print("plots/plot_trk_length.root");
-
-	TCanvas *c8aab = new TCanvas("c8aab", "c8aab", 1080, 1080);
-  	c8aab->cd();
-  	_histStack_trk2_length.DrawStack(c8aab, Utility::kTrackLength);
-  	c8aab->Print("plots/plot_trk2_length.root");
-
-  	TCanvas *c8aa = new TCanvas("c8aa", "c8aa", 1080, 1080);
-  	c8aa->cd();
-  	_histStack_trk_score.DrawStack(c8aa, Utility::kTrackScore);
-  	c8aa->Print("plots/plot_trk_score.root");  	
-
-  	TCanvas *c8b = new TCanvas("c8b", "c8b", 1080, 1080);
-  	c8b->cd();
-  	_histStack_trk_llrpid.DrawStack(c8b, Utility::kLLRPID);
-  	c8b->Print("plots/plot_llrpid.root");
-  	
-  	TCanvas *c9 = new TCanvas("c9", "c9", 1080, 1080);
-  	c9->cd();
-  	_histStack_trk_vertex_distance.DrawStack(c9, Utility::kTrackDistance);
-  	c9->Print("plots/plot_trk_vertex_distance.root");
-
-	TCanvas *c10 = new TCanvas("c10", "c10", 1080, 1080);
-  	c10->cd();
-  	_histStack_n_non_proton_tracks.DrawStack(c10, Utility::kNTrack);
-  	c10->Print("plots/plot_n_non_proton_tracks.root");
-
-	TCanvas *c11 = new TCanvas("c11", "c11", 1080, 1080);
-  	c11->cd();
-  	_histStack_n_pion_candidate_tracks.DrawStack(c11, Utility::kNTrack);
-  	c11->Print("plots/plot_n_pion_candidate_tracks.root");
 	
 	TCanvas *wc1 = new TCanvas("wc1", "wc1", 1080, 1080);
 	_histStack_wc_numu_cc_flag.DrawStack(wc1, Utility::kWCNumuCCFlag);
@@ -1001,38 +919,6 @@ void SelectionDriver::runBDTSelectionFull() {
 	_histStack_wc_match_isFC.DrawStack(wc3, Utility::kisFC);
   	wc3->Print("plots/plot_wc_match_isFC.root");
 
-	TCanvas *wc4 = new TCanvas("wc4", "wc4", 1080, 1080);
-	_histStack_wc_reco_larpid_pidScore_el.DrawStack(wc4, Utility::kLArPID_el);
-  	wc4->Print("plots/plot_wc_reco_larpid_pidScore_el.root");
-
-	TCanvas *wc5 = new TCanvas("wc5", "wc5", 1080, 1080);
-	_histStack_wc_reco_larpid_pidScore_ph.DrawStack(wc5, Utility::kLArPID_ph);
-  	wc5->Print("plots/plot_wc_reco_larpid_pidScore_ph.root");
-
-	TCanvas *wc6 = new TCanvas("wc6", "wc6", 1080, 1080);
-	_histStack_wc_reco_larpid_pidScore_mu.DrawStack(wc6, Utility::kLArPID_mu);
-  	wc6->Print("plots/plot_wc_reco_larpid_pidScore_mu.root");
-
-	TCanvas *wc7 = new TCanvas("wc7", "wc7", 1080, 1080);
-	_histStack_wc_reco_larpid_pidScore_pi.DrawStack(wc7, Utility::kLArPID_pi);
-  	wc7->Print("plots/plot_wc_reco_larpid_pidScore_pi.root");
-
-	TCanvas *wc8 = new TCanvas("wc8", "wc8", 1080, 1080);
-	_histStack_wc_reco_larpid_pidScore_pr.DrawStack(wc8, Utility::kLArPID_pr);
-  	wc8->Print("plots/plot_wc_reco_larpid_pidScore_pr.root");
-
-	TCanvas *wc9 = new TCanvas("wc9", "wc9", 1080, 1080);
-	_histStack_wc_reco_larpid_procScore_prim.DrawStack(wc9, Utility::kLArPID_prim);
-  	wc9->Print("plots/plot_wc_reco_larpid_procScore_prim.root");
-
-	TCanvas *wc10 = new TCanvas("wc10", "wc10", 1080, 1080);
-	_histStack_wc_reco_larpid_procScore_chgd.DrawStack(wc10, Utility::kLArPID_chgd);
-  	wc10->Print("plots/plot_wc_reco_larpid_procScore_chgd.root");
-
-	TCanvas *wc11 = new TCanvas("wc11", "wc11", 1080, 1080);
-	_histStack_wc_reco_larpid_procScore_ntrl.DrawStack(wc11, Utility::kLArPID_ntrl);
-  	wc11->Print("plots/plot_wc_reco_larpid_procScore_ntrl.root");
-
 	// observables
 	TCanvas *o1 = new TCanvas("o1", "o1", 1080, 1080);
   	o1->cd();
@@ -1043,6 +929,31 @@ void SelectionDriver::runBDTSelectionFull() {
   	o2->cd();
   	_histStack_sel_pion_phi.DrawStack(o2, Utility::kPhi);
   	o2->Print("plots/plot_pion_phi.root");
+
+	TCanvas *o3 = new TCanvas("o3", "o3", 1080, 1080);
+  	o3->cd();
+  	_histStack_sel_pion_momentum.DrawStack(o3, Utility::kTrackMomentum);
+  	o3->Print("plots/plot_pion_momentum.root"); 
+
+	TCanvas *o3b = new TCanvas("o3b", "o3b", 1080, 1080);
+  	o3b->cd();
+  	_histStack_sel_pion_momentum_interaction.DrawStack(o3b, Utility::kTrackMomentum);
+  	o3b->Print("plots/plot_pion_momentum_interaction.root"); 
+
+	TCanvas *o4 = new TCanvas("o4", "o4", 1080, 1080);
+  	o4->cd();
+  	_histStack_sel_sideband_larpidScore.DrawStack(o4, Utility::kLArPID_pi);
+  	o4->Print("plots/plot_sideband_larpidScore.root"); 
+
+	TCanvas *o5 = new TCanvas("o5", "o5", 1080, 1080);
+  	o5->cd();
+  	_histStack_sel_proton_momentum.DrawStack(o5, Utility::kTrackMomentum);
+  	o5->Print("plots/plot_proton_momentum.root"); 
+
+	TCanvas *o6 = new TCanvas("o6", "o6", 1080, 1080);
+  	o6->cd();
+  	_histStack_sel_proton_theta.DrawStack(o6, Utility::kTheta);
+  	o6->Print("plots/plot_proton_theta.root");
 
 	// lantern
 	TCanvas *l1 = new TCanvas("l1", "l1", 1080, 1080);
@@ -1070,7 +981,6 @@ void SelectionDriver::runBDTSelectionFull() {
 	_histStack_lantern_larpid_pidScore_pr_particle.DrawStack(l6, Utility::kLArPID_pr);
   	l6->Print("plots/plot_lantern_larpid_pidScore_pr_particle.root");
 
-	
 	TCanvas *l6a = new TCanvas("l6a", "l6a", 1080, 1080);
 	_histStack_lantern_larpid_mupi_llr_particle.DrawStack(l6a, Utility::kLArPID_pi);
   	l6a->Print("plots/plot_lantern_larpid_mupi_llr_particle.root");
@@ -1126,161 +1036,141 @@ void SelectionDriver::runBDTSelectionFull() {
 	pionTheta2D->Draw("COLZ");
   	res3->Print("plots/plot_pion_theta_resolution_2D.root");
 
-	// draw dE/dx vs residual range plot
-	TCanvas *res4 = new TCanvas("res4", "res4", 1080, 1080);
-	res4->cd();
-	dEdx_vs_ResRange->GetXaxis()->SetTitle("Residual Range [cm]");
-	dEdx_vs_ResRange->GetYaxis()->SetTitle("dE/dx [MeV/cm]");
-	dEdx_vs_ResRange->Draw("COLZ");
+	// draw resolution plots
+	TCanvas *res3a = new TCanvas("res3a", "res3a", 1080, 1080);
+	res3a->cd();
+	pionTheta1D->GetXaxis()->SetTitle("Pion Theta ((Reco - True) / True)");
+	pionTheta1D->Draw("HIST");
+  	res3a->Print("plots/plot_pion_theta_resolution_1D.root");
 
-	// create theoretical prediction
-	std::vector<double> rr_vals;
-	std::vector<double> mpv_dedx_vals;
+}
+// ------------------------------------------------------------------------------
 
-	double pitch = 0.6; // cm
+// Compare Lantern vertex score for true signal events with a Lantern vertex, Genie vs NuWro (Run 5)
+void SelectionDriver::compareLanternVtxScoreGenieNuWro() {
 
-	for (int i = 0; i < 330; i++) {
-		double rr = i*pitch;
-		double KE = _physdedx.KEFromRangeSpline(rr);
-		double mpv_dedx = _physdedx.MPVdEdx(KE, pitch);
+	const double data_pot_run5 = 1.425e20;
 
-		rr_vals.push_back(rr);
-		mpv_dedx_vals.push_back(mpv_dedx);
+	std::vector<std::string> filename_list = {filename_mc_run5, filename_nuwro_run5};
+	std::vector<Utility::FileTypeEnums> file_types_list = {Utility::kMC, Utility::kFakeData};
+	std::vector<std::string> label_list = {"GENIE", "NuWro"};
 
+	Selection _selection(_utility);
+
+	// [sample][0 = 0p, 1 = Np]
+	std::vector<std::vector<TH1F*>> hist_list;
+	std::vector<std::string> proton_label_list = {"0p", "Np"};
+
+	for (unsigned int idx = 0; idx < filename_list.size(); idx++) {
+
+		std::cout << "Processing file " << filename_list[idx] << std::endl;
+
+		TFile *f = new TFile(filename_list[idx].c_str());
+
+		// sum MC POT from Pandora subrun tree
+		TTree *subrun_tree = (TTree*)f->Get("nuselection/SubRun");
+		float pot = 0;
+		subrun_tree->SetBranchAddress("pot", &pot);
+		double mc_pot = 0;
+		for (int s = 0; s < subrun_tree->GetEntries(); s++) {
+			subrun_tree->GetEntry(s);
+			mc_pot += pot;
+		}
+		double pot_weight = data_pot_run5 / mc_pot;
+		std::cout << label_list[idx] << " MC POT: " << mc_pot << ", POT weight: " << pot_weight << std::endl;
+
+		TTree *pelee_tree = (TTree*)f->Get("nuselection/NeutrinoSelectionFilter");
+		TTree *wc_BDTvars_tree = (TTree*)f->Get("wcpselection/T_BDTvars");
+		TTree *wc_eval_tree = (TTree*)f->Get("wcpselection/T_eval");
+		TTree *wc_PFeval_tree = (TTree*)f->Get("wcpselection/T_PFeval");
+		TTree *wc_spacepoints_tree = (TTree*)f->Get("wcpselection/T_spacepoints");
+		TTree *lantern_tree = (TTree*)f->Get("lantern/EventTree");
+
+		EventContainer _event(pelee_tree, wc_eval_tree, wc_BDTvars_tree, wc_PFeval_tree, wc_spacepoints_tree, lantern_tree, _utility);
+
+		std::vector<TH1F*> h;
+		for (unsigned int ip = 0; ip < proton_label_list.size(); ip++) {
+			h.push_back(new TH1F(Form("h_vtxScore_%s_%s", label_list[idx].c_str(), proton_label_list[ip].c_str()), "", 40, 0, 1.001));
+			h[ip]->Sumw2();
+		}
+
+		int n_entries = pelee_tree->GetEntries();
+		std::cout << "Initial number events: " << n_entries << std::endl;
+
+		for (int e = 0; e < n_entries; e++) {
+
+			pelee_tree->GetEntry(e);
+
+			// skip known problematic MC events
+			if (file_types_list[idx] == Utility::kMC) {
+				if (_event.run == 20872 && _event.sub == 14 && _event.evt == 749) continue;
+				if (_event.run == 20607 && _event.sub == 355 && _event.evt == 17791) continue;
+			}
+
+			wc_BDTvars_tree->GetEntry(e);
+			wc_eval_tree->GetEntry(e);
+			wc_PFeval_tree->GetEntry(e);
+			wc_spacepoints_tree->GetEntry(e);
+			lantern_tree->GetEntry(e);
+
+			if ( (e != 0) && (n_entries >= 10) &&  (e % (n_entries/10) == 0) ) {
+				std::cout << Form("%i0%% Completed...\n", e / (n_entries/10));
+			}
+
+			// populates classification and CV weight
+			_selection.ApplyLanternSelection(_event, file_types_list[idx], Utility::kRun4ab);
+
+			if (_event.classification != Utility::kNC1pi) continue;
+			if (_event.lantern_foundVertex != 1) continue;
+
+			// split by number of protons above threshold
+			if (_event.mc_NProtons_ == 0) h[0]->Fill(_event.lantern_vtxScore, pot_weight * _event.weight_cv);
+			else if (_event.mc_NProtons_ > 0) h[1]->Fill(_event.lantern_vtxScore, pot_weight * _event.weight_cv);
+		}
+
+		for (unsigned int ip = 0; ip < proton_label_list.size(); ip++) {
+			std::cout << label_list[idx] << " signal " << proton_label_list[ip] << " events with Lantern vertex (scaled to " << data_pot_run5 << " POT): " << h[ip]->Integral() << std::endl;
+			h[ip]->SetDirectory(0);
+		}
+		hist_list.push_back(h);
+		f->Close();
 	}
 
-	// draw as TGraph
-	TGraph *graph = new TGraph(mpv_dedx_vals.size(), &rr_vals[0], &mpv_dedx_vals[0]);
-	graph->SetLineColor(kBlack);
-	graph->SetLineStyle(9);
-	graph->SetLineWidth(3);
-	graph->Draw("L same");
+	// draw: one pad per proton multiplicity, GENIE vs NuWro in each
+	gStyle->SetOptStat(0);
+	TCanvas *c = new TCanvas("c_vtxScore", "", 1400, 600);
+	c->Divide(2, 1);
 
-	res4->Print("plots/plot_dEdx_vs_ResRange.root");
-	
-	// WC LArPID per particle
-	TCanvas *wc_p1 = new TCanvas("wc_p1", "wc_p1", 1080, 1080);
-  	wc_p1->cd();
-  	_histStack_wc_reco_larpid_pidScore_el_particle.DrawStack(wc_p1, Utility::kLArPID_el);
-  	wc_p1->Print("plots/plot_wc_reco_larpid_pidScore_el_particle.root");
-	TCanvas *wc_p2 = new TCanvas("wc_p2", "wc_p2", 1080, 1080);
-  	wc_p2->cd();
-  	_histStack_wc_reco_larpid_pidScore_ph_particle.DrawStack(wc_p2, Utility::kLArPID_ph);
-  	wc_p2->Print("plots/plot_wc_reco_larpid_pidScore_ph_particle.root");
-	TCanvas *wc_p3 = new TCanvas("wc_p3", "wc_p3", 1080, 1080);
-  	wc_p3->cd();
-  	_histStack_wc_reco_larpid_pidScore_mu_particle.DrawStack(wc_p3, Utility::kLArPID_mu);
-  	wc_p3->Print("plots/plot_wc_reco_larpid_pidScore_mu_particle.root");
-	TCanvas *wc_p4 = new TCanvas("wc_p4", "wc_p4", 1080, 1080);
-  	wc_p4->cd();
-  	_histStack_wc_reco_larpid_pidScore_pi_particle.DrawStack(wc_p4, Utility::kLArPID_pi);
-  	wc_p4->Print("plots/plot_wc_reco_larpid_pidScore_pi_particle.root");
-	TCanvas *wc_p5 = new TCanvas("wc_p5", "wc_p5", 1080, 1080);
-  	wc_p5->cd();
-  	_histStack_wc_reco_larpid_pidScore_pr_particle.DrawStack(wc_p5, Utility::kLArPID_pr);
-  	wc_p5->Print("plots/plot_wc_reco_larpid_pidScore_pr_particle.root");
-	TCanvas *wc_p6 = new TCanvas("wc_p6", "wc_p6", 1080, 1080);
-  	wc_p6->cd();
-	_histStack_wc_reco_larpid_pdg_particle.DrawStack(wc_p6, Utility::kLArPID_pdg);
-  	wc_p6->Print("plots/plot_wc_reco_larpid_pdg_particle.root");
-	TCanvas *wc_p7 = new TCanvas("wc_p7", "wc_p7", 1080, 1080);
-  	wc_p7->cd();
-	_histStack_wc_n_pion_candidate_daughters_particle.DrawStack(wc_p7, Utility::kNTrackDaughters);
-  	wc_p7->Print("plots/plot_wc_n_pion_candidate_daughters_particle.root");
-	TCanvas *wc_p8 = new TCanvas("wc_p8", "wc_p8", 1080, 1080);
-  	wc_p8->cd();
-	_histStack_wc_pion_candidate_daughters_total_energy_particle.DrawStack(wc_p8, Utility::kDaughterEnergy);
-  	wc_p8->Print("plots/plot_wc_pion_candidate_daughters_total_energy_particle.root");
-	TCanvas *wc_p9 = new TCanvas("wc_p9", "wc_p9", 1080, 1080);
-  	wc_p9->cd();
-	_histStack_wc_n_blips_3cm.DrawStack(wc_p9, Utility::kNBlips25cm);
-  	wc_p9->Print("plots/plot_wc_n_blips_25cm.root");
-	TCanvas *wc_p10 = new TCanvas("wc_p10", "wc_p10", 1080, 1080);
-  	wc_p10	->cd();
-	_histStack_wc_n_blips_5cm.DrawStack(wc_p10, Utility::kNBlips50cm);
-  	wc_p10->Print("plots/plot_wc_n_blips_50cm.root");
-	TCanvas *wc_p11 = new TCanvas("wc_p11", "wc_p11", 1080, 1080);
-  	wc_p11->cd();
-	_histStack_wc_n_blips_10cm.DrawStack(wc_p11, Utility::kNBlips10cm);
-  	wc_p11->Print("plots/plot_wc_n_blips_100cm.root");	
+	std::vector<int> colour_list = {kAzure+2, kOrange+7};
 
-	TCanvas *wc11a = new TCanvas("wc11a", "wc11a", 1080, 1080);
-	_histStack_wc_larpid_mupi_llr_particle.DrawStack(wc11a, Utility::kLArPID_pi);
-  	wc11a->Print("plots/plot_wc_larpid_mupi_llr_particle.root");
+	for (unsigned int ip = 0; ip < proton_label_list.size(); ip++) {
+		c->cd(ip + 1);
+		gPad->SetLeftMargin(0.13);
 
-	TCanvas *wc11b = new TCanvas("wc11b", "wc11b", 1080, 1080);
-	_histStack_wc_larpid_prpi_llr_particle.DrawStack(wc11b, Utility::kLArPID_pr);
-  	wc11b->Print("plots/plot_wc_larpid_prpi_llr_particle.root");
+		double ymax = 0;
+		for (unsigned int idx = 0; idx < hist_list.size(); idx++) {
+			hist_list[idx][ip]->SetLineColor(colour_list[idx]);
+			hist_list[idx][ip]->SetLineWidth(2);
+			ymax = std::max(ymax, hist_list[idx][ip]->GetMaximum());
+		}
 
-	TCanvas *wc11c = new TCanvas("wc11c", "	wc11c", 1080, 1080);
-	_histStack_wc_larpid_prmu_llr_particle.DrawStack(wc11c, Utility::kLArPID_mu);
-  	wc11c->Print("plots/plot_wc_larpid_prmu_llr_particle.root");
+		hist_list[0][ip]->SetMaximum(1.2 * ymax);
+		hist_list[0][ip]->SetMinimum(0);
+		hist_list[0][ip]->SetTitle(Form("True NC1#pi %s with Lantern vertex, Run 5 (1.425 #times 10^{20} POT);Lantern vertex score;Events", proton_label_list[ip].c_str()));
+		hist_list[0][ip]->Draw("hist e");
+		for (unsigned int idx = 1; idx < hist_list.size(); idx++) hist_list[idx][ip]->Draw("hist e same");
 
-	// per particle
-	TCanvas *p1 = new TCanvas("p1", "p1", 1080, 1080);
-  	p1->cd();
-  	_histStack_trk_length_particle.DrawStack(p1, Utility::kTrackLength);
-  	p1->Print("plots/plot_trk_length_particle.root");
-	
-	TCanvas *p2 = new TCanvas("p2", "p2", 1080, 1080);
-  	p2->cd();
-  	_histStack_trk_score_particle.DrawStack(p2, Utility::kTrackScore);
-  	p2->Print("plots/plot_trk_score_particle.root");
-	TCanvas *p3 = new TCanvas("p3", "p3", 1080, 1080);
-  	p3->cd();
-  	_histStack_trk_llrpid_particle.DrawStack(p3, Utility::kLLRPID);
-  	p3->Print("plots/plot_llrpid_particle.root");
-	TCanvas *p4 = new TCanvas("p4", "p4", 1080, 1080);
-  	p4->cd();
-  	_histStack_trk_bragg_mu_particle.DrawStack(p4, Utility::kTrackBraggMu);
-  	p4->Print("plots/plot_trk_bragg_mu_particle.root");
-	TCanvas *p5 = new TCanvas("p5", "p5", 1080, 1080);
-  	p5->cd();
-  	_histStack_trk_bragg_p_particle.DrawStack(p5, Utility::kTrackBraggP);
-  	p5->Print("plots/plot_trk_bragg_p_particle.root");
-	TCanvas *p6 = new TCanvas("p6", "p6", 1080, 1080);
-  	p6->cd();
-  	_histStack_trk_bragg_pion_particle.DrawStack(p6, Utility::kTrackBraggPion);
-  	p6->Print("plots/plot_trk_bragg_pion_particle.root");
-	TCanvas *p7 = new TCanvas("p7", "p7", 1080, 1080);
-  	p7->cd();
-  	_histStack_trk_bragg_mip_particle.DrawStack(p7, Utility::kTrackBraggMIP);
-  	p7->Print("plots/plot_trk_bragg_mip_particle.root");
-	TCanvas *p8 = new TCanvas("p8", "p8", 1080, 1080);
-  	p8->cd();
-  	_histStack_trk_dEdx_trunk_particle.DrawStack(p8, Utility::kTrackdEdx);
-  	p8->Print("plots/plot_trk_dEdx_trunk_particle.root");
-	TCanvas *p9 = new TCanvas("p9", "p9", 1080, 1080);
-  	p9->cd();
-  	_histStack_trk_daughters_particle.DrawStack(p9, Utility::kNTrackDaughters);
-  	p9->Print("plots/plot_trk_daughters_particle.root");
-	TCanvas *p10 = new TCanvas("p10", "p10", 1080, 1080);
-  	p10->cd();
-  	_histStack_trk_end_spacepoints_particle.DrawStack(p10, Utility::kTrackEndSpacepoints);
-  	p10->Print("plots/plot_trk_end_spacepoints_particle.root");
-	TCanvas *p11 = new TCanvas("p11", "p11", 1080, 1080);
-  	p11->cd();
-  	_histStack_trk_avg_deflection_stdev_particle.DrawStack(p11, Utility::kTrackWiggliness);
-  	p11->Print("plots/plot_trk_avg_deflection_stdev_particle.root");
-	TCanvas *p12 = new TCanvas("p12", "p12", 1080, 1080);
-  	p12->cd();
-  	_histStack_pfng2mipfrac_particle.DrawStack(p12, Utility::kNuGraphMipFrac);
-  	p12->Print("plots/plot_pfng2mipfrac_particle.root");
-	TCanvas *p13 = new TCanvas("p13", "p13", 1080, 1080);
-  	p13->cd();
-  	_histStack_pfng2hipfrac_particle.DrawStack(p13, Utility::kNuGraphHipFrac);
-  	p13->Print("plots/plot_pfng2hipfrac_particle.root");
-	TCanvas *p14 = new TCanvas("p14", "p14", 1080, 1080);
-  	p14->cd();
-  	_histStack_pfng2shrfrac_particle.DrawStack(p14, Utility::kNuGraphShrFrac);
-  	p14->Print("plots/plot_pfng2shrfrac_particle.root");
-	TCanvas *p15 = new TCanvas("p15", "p15", 1080, 1080);
-  	p15->cd();
-  	_histStack_pfng2mclfrac_particle.DrawStack(p15, Utility::kNuGraphMclFrac);
-  	p15->Print("plots/plot_pfng2mclfrac_particle.root");
-	TCanvas *p16 = new TCanvas("p16", "p16", 1080, 1080);
-  	p16->cd();
-  	_histStack_pfng2dfsfrac_particle.DrawStack(p16, Utility::kNuGraphDfsFrac);
-  	p16->Print("plots/plot_pfng2dfsfrac_particle.root");
+		TLegend *leg = new TLegend(0.15, 0.72, 0.5, 0.88);
+		leg->SetBorderSize(0);
+		leg->SetFillStyle(0);
+		for (unsigned int idx = 0; idx < hist_list.size(); idx++) {
+			leg->AddEntry(hist_list[idx][ip], Form("%s (%.1f events)", label_list[idx].c_str(), hist_list[idx][ip]->Integral()), "l");
+		}
+		leg->Draw();
+	}
 
+	gSystem->mkdir("plots", true);
+	c->Print("plots/plot_lantern_vtxScore_genie_vs_nuwro_0pNp.root");
+	c->Print("plots/plot_lantern_vtxScore_genie_vs_nuwro_0pNp.png");
+	c->Print("plots/plot_lantern_vtxScore_genie_vs_nuwro_0pNp.pdf");
 }

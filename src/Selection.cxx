@@ -28,6 +28,9 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	// determine event weight
     _evt.calculateCVEventWeight(type, runPeriod); 
 
+	// set truth pion information
+	setTruthPionInformation(_evt);
+
 	// neutrino vertex found
 	if (_evt.lantern_foundVertex == 0) return false;
 
@@ -78,7 +81,8 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	}
 
 	// at least one primary track
-	if (n_primary_tracks < 1) return false; 
+	//if (n_primary_tracks < 1) return false; 
+	if (n_primary_tracks < 2) return false; 
 
 	// zero primary showers
 	if (n_primary_showers != 0) return false;
@@ -87,7 +91,7 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	if (!ApplyVertexFVCut(_evt.wc_reco_nuvtxX, _evt.wc_reco_nuvtxY, _evt.wc_reco_nuvtxZ)) return false; // WC vertex in fiducial volume
 	if (_evt.wc_match_isFC == 0) return false; // WC fully contained
 	if (_evt.wc_numu_cc_flag < 0) return false;		// WC generic neutrino selection
-	
+
 	// WC at least one primary particle identified 
 	int n_particle_WC = 0;
 	for (unsigned int wc_idx = 0; wc_idx < _evt.wc_reco_Ntrack; wc_idx++) {
@@ -101,11 +105,11 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 		n_particle_WC++;
 	}
 
-	if (n_particle_WC < 1) return false;
+	//if (n_particle_WC < 1) return false;
+	if (n_particle_WC < 2) return false;
 
 	// WC / Lantern vertices are consistent
 	if (_evt.vertex_discrepancy > 5) return false; // require WC and Lantern vertices to be within 5cm
-
 
 	// classify primary tracks
 	int n_lantern_larpid_mu = 0;
@@ -115,6 +119,8 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	int n_lantern_larpid_unclassified = 0;
 
 	std::vector<int> lantern_pion_candidate_indices;
+	std::vector<int> lantern_pion_CC1piSideband_candidate_indices;
+	std::vector<double> lantern_pion_candidate_lengths;
 
 	for (int idx_track = 0; idx_track < _evt.lantern_nTracks; idx_track++) {
 		if (_evt.lantern_trackIsSecondary[idx_track] == 0) { // primary
@@ -137,16 +143,18 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 			if (std::abs(_evt.lantern_trackPID[idx_track]) == 13) {
 				n_lantern_larpid_mu++;
 				lantern_pion_candidate_indices.push_back(idx_track);
+				lantern_pion_candidate_lengths.push_back(track_length);
 			}
 			else if (std::abs(_evt.lantern_trackPID[idx_track]) == 211) {
 				n_lantern_larpid_pi++;
 				lantern_pion_candidate_indices.push_back(idx_track);
+				lantern_pion_candidate_lengths.push_back(track_length);
+				lantern_pion_CC1piSideband_candidate_indices.push_back(idx_track);
 			}
 			else if (std::abs(_evt.lantern_trackPID[idx_track]) == 2212) n_lantern_larpid_pr++;
 			else {
 				n_lantern_larpid_other++;
 			}
-		
 		}
 	}
 
@@ -159,6 +167,10 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	int n_wc_reco_other = 0;
 
 	std::vector<unsigned int> wc_pion_candidate_indices_classical;
+	std::vector<double> wc_pion_candidate_lengths_classical;
+
+	float wc_longest_track_length = 0.0;
+	int wc_longest_track_id = -1;
 
 	for (unsigned int wc_idx = 0; wc_idx < _evt.wc_reco_Ntrack; wc_idx++) {
 
@@ -184,12 +196,20 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 
 		if (wc_track_length < 5.0) continue; // 5 cm
 
+		// check if new longest track
+		if (wc_track_length > wc_longest_track_length) {
+			wc_longest_track_length = wc_track_length;
+			wc_longest_track_id = wc_idx;
+		}
+
 		if (_evt.wc_reco_pdg[wc_idx] == 13) {
 			wc_pion_candidate_indices_classical.push_back(wc_idx);
+			wc_pion_candidate_lengths_classical.push_back(wc_track_length);
 			n_wc_reco_mu++;
 			continue;
 		} else if (_evt.wc_reco_pdg[wc_idx] == 211) {
 			wc_pion_candidate_indices_classical.push_back(wc_idx);
+			wc_pion_candidate_lengths_classical.push_back(wc_track_length);
 			n_wc_reco_pi++;
 			continue;
 		} else if (_evt.wc_reco_pdg[wc_idx] == 2212) {
@@ -202,6 +222,9 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 
 	}
 
+	_evt.wc_primaryTrackIndex = wc_longest_track_id;
+	_evt.wc_primaryTrackLength = wc_longest_track_length;
+
 	// Apply Selection PID Cuts
 	// Lantern
 	// no unclassified particles
@@ -213,12 +236,104 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 
 	// NC 0pi Sideband: no muon or pion tracks in WC or Lantern
 	if (n_lantern_larpid_mu + n_lantern_larpid_pi == 0 && n_wc_reco_mu + n_wc_reco_pi == 0) {
-		_evt.sel_NCNpSideband_ = true;
+
+		// set kinematics using WC variables
+		// consider primary track - most energetic proton 
+		// apply quality cuts and check it is a proton pdg
+		if (_evt.wc_primaryTrackIndex != -1 && _evt.wc_reco_pdg[_evt.wc_primaryTrackIndex] == 2212) {
+
+			// calculate momentum for the primary proton by range
+			// don't use WC variable (Ben)
+			//double wc_proton_momentum = std::sqrt( std::pow(_evt.wc_reco_protonMomentum[0],2) + std::pow(_evt.wc_reco_protonMomentum[1],2) + std::pow(_evt.wc_reco_protonMomentum[2],2) );
+			double wc_proton_momentum = _evt.CalculateProtonMomentumRange(_evt.wc_primaryTrackLength);
+
+			if (wc_proton_momentum > 0.4 && wc_proton_momentum < 1.2) { // require proton momentum to be within range								
+
+				_evt.sel_NCNpSideband_ = true;
+			
+				// angle
+				double start_momentum_mag = std::sqrt(std::pow(_evt.wc_reco_startMomentum[_evt.wc_primaryTrackIndex][0], 2) + 
+										std::pow(_evt.wc_reco_startMomentum[_evt.wc_primaryTrackIndex][1], 2) + 
+										std::pow(_evt.wc_reco_startMomentum[_evt.wc_primaryTrackIndex][2], 2));
+				_evt.sel_pion_theta_= _evt.wc_reco_startMomentum[_evt.wc_primaryTrackIndex][2] / start_momentum_mag;
+
+				// momentum
+				_evt.sel_pion_momentum_ = wc_proton_momentum;
+				
+			}
+		}
 	}
 	
 	// CC 1pi Sideband: WC + Lantern
-	if ( (n_lantern_larpid_mu + n_lantern_larpid_pi)  == 2  && n_wc_reco_mu + n_wc_reco_pi == 2) {
-		_evt.sel_CC1piSideband_ = true;
+	if ( (n_lantern_larpid_mu + n_lantern_larpid_pi)  == 2 && n_wc_reco_mu + n_wc_reco_pi == 2) {
+		
+		// Use Lantern to identify the pion; require only 1 pion candidate
+		if (n_lantern_larpid_pi == 1) {
+
+			// sideband particle kinematics, use pion candidate as identified by Lantern
+			int lantern_CC1piSideband_candidate_index = lantern_pion_CC1piSideband_candidate_indices[0];
+
+			// calculate angle between the one Lantern pion candidate and each of the two WC candidates
+			TVector3 lantern_start_direction(_evt.lantern_trackStartDirX[lantern_CC1piSideband_candidate_index], _evt.lantern_trackStartDirY[lantern_CC1piSideband_candidate_index], _evt.lantern_trackStartDirZ[lantern_CC1piSideband_candidate_index]);
+			lantern_start_direction = lantern_start_direction.Unit();
+			
+			// WC
+			TVector3 wc_start_direction_1(_evt.wc_reco_startMomentum[wc_pion_candidate_indices_classical[0]][0], _evt.wc_reco_startMomentum[wc_pion_candidate_indices_classical[0]][1], _evt.wc_reco_startMomentum[wc_pion_candidate_indices_classical[0]][2]);
+			TVector3 wc_start_direction_2(_evt.wc_reco_startMomentum[wc_pion_candidate_indices_classical[1]][0], _evt.wc_reco_startMomentum[wc_pion_candidate_indices_classical[1]][1], _evt.wc_reco_startMomentum[wc_pion_candidate_indices_classical[1]][2]);
+			wc_start_direction_1 = wc_start_direction_1.Unit(); wc_start_direction_2 = wc_start_direction_2.Unit();
+						
+			// angle (radians)
+			float anglediff_1 = lantern_start_direction.Angle(wc_start_direction_1) * 180. / M_PI;
+			float anglediff_2 = lantern_start_direction.Angle(wc_start_direction_2) * 180. / M_PI;
+			
+			// select WC track with the most similar direction		
+			int chosen_wc_index = -1;
+			float chosen_anglediff = 9999;
+			if (anglediff_1 < anglediff_2) {
+				chosen_wc_index = 0;
+				chosen_anglediff = anglediff_1;
+			}
+			else {
+				chosen_wc_index = 1;
+				chosen_anglediff = anglediff_2;
+			}
+
+			// require within 30 degrees, to match condition applied on signal events
+			if (chosen_anglediff < 30) {
+
+				// passes sideband
+				// passes sideband
+				_evt.sel_CC1piSideband_ = true;
+
+				int WC_Idx = wc_pion_candidate_indices_classical[chosen_wc_index];
+				setSidebandRecoKinematics(_evt, WC_Idx);
+
+				// check momentum threshold, remove below threshold events from sideband
+				if (_evt.sel_pion_momentum_ <= 0.1) { //|| _evt.sel_pion_momentum_ >= 0.6) {
+					_evt.sel_CC1piSideband_ = false;
+				}
+
+				// random index – used for plotting sampled LArPID score only
+				int chosen_index = 0;
+				if (_evt.evt % 2 == 0){
+					chosen_index = 0;
+				}
+				else chosen_index = 1;
+
+				// save random track larpid score + pdg
+				_evt.sel_CC1piSideband_track_larpidScore_ = std::tanh(0.5 * (_evt.lantern_trackPiScore[lantern_pion_candidate_indices[chosen_index]] - _evt.lantern_trackMuScore[lantern_pion_candidate_indices[chosen_index]]));
+				
+				Utility::ParticleEnums particle_class = _evt.lantern_particle_classification_v[lantern_pion_candidate_indices[chosen_index]];
+				// group pion final state processes, testing
+				if (particle_class == Utility::kPionAbsorption0p ||
+					particle_class == Utility::kPionAbsorptionNp ||
+					particle_class == Utility::kPionChargeExchange) {
+					
+						particle_class = Utility::kPionDecay;
+				}
+				_evt.sel_CC1piSideband_track_classification_ = particle_class;
+			}
+		}
 	}
 
 	// apply actual selection: require exactly one muon or pion track
@@ -229,6 +344,7 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	if (n_wc_reco_mu + n_wc_reco_pi != 1) return false; // require at least one muon or pion
 	_evt.wc_pion_candidate_index = wc_pion_candidate_indices_classical[0];
 
+
 	// Consistency check between WC and Lantern candidate
 	// Distance between candidate track start positions
 	// calculate start distance between WC and Lantern candidates
@@ -238,34 +354,21 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 		std::pow(wc_candidate_start[0] - lantern_candidate_start[0], 2) +
 		std::pow(wc_candidate_start[1] - lantern_candidate_start[1], 2) +
 		std::pow(wc_candidate_start[2] - lantern_candidate_start[2], 2) );
-	
-	// calculate end distance between WC and Lantern candidates
-	float wc_candidate_end[3] = {_evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][0], _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][1], _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][2]};
-	float lantern_candidate_end[3] = {_evt.lantern_trackEndPosX[_evt.lantern_pion_candidate_index], _evt.lantern_trackEndPosY[_evt.lantern_pion_candidate_index], _evt.lantern_trackEndPosZ[_evt.lantern_pion_candidate_index]};
-	float end_distance = std::sqrt(
-		std::pow(wc_candidate_end[0] - lantern_candidate_end[0], 2) +
-		std::pow(wc_candidate_end[1] - lantern_candidate_end[1], 2) +
-		std::pow(wc_candidate_end[2] - lantern_candidate_end[2], 2) );
 
 	// calculate angle between WC and Lantern candidates, in degrees
-	float wc_candidate_vector[3] = {wc_candidate_end[0] - wc_candidate_start[0], wc_candidate_end[1] - wc_candidate_start[1], wc_candidate_end[2] - wc_candidate_start[2]};
-	float lantern_candidate_vector[3] = {lantern_candidate_end[0] - lantern_candidate_start[0], lantern_candidate_end[1] - lantern_candidate_start[1], lantern_candidate_end[2] - lantern_candidate_start[2]};
-
-	// calculate dot product of vectors
-	float dot_product = wc_candidate_vector[0]*lantern_candidate_vector[0] + wc_candidate_vector[1]*lantern_candidate_vector[1] + wc_candidate_vector[2]*lantern_candidate_vector[2];
-	// calculate magnitudes of vectors
-	float wc_magnitude = std::sqrt(wc_candidate_vector[0]*wc_candidate_vector[0] + wc_candidate_vector[1]*wc_candidate_vector[1] + wc_candidate_vector[2]*wc_candidate_vector[2]);
-	float lantern_magnitude = std::sqrt(lantern_candidate_vector[0]*lantern_candidate_vector[0] + lantern_candidate_vector[1]*lantern_candidate_vector[1] + lantern_candidate_vector[2]*lantern_candidate_vector[2]);
-	// calculate angle in radians
-	float angle_rad = 0;
-	if (wc_magnitude > 0 && lantern_magnitude > 0) {
-		angle_rad = std::acos(dot_product / (wc_magnitude * lantern_magnitude));
-	}
+	// lantern
+	TVector3 lantern_start_direction(_evt.lantern_trackStartDirX[_evt.lantern_pion_candidate_index], _evt.lantern_trackStartDirY[_evt.lantern_pion_candidate_index], _evt.lantern_trackStartDirZ[_evt.lantern_pion_candidate_index]);
+	lantern_start_direction = lantern_start_direction.Unit();
+	// WC
+	TVector3 wc_start_direction(_evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][0], _evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][1], _evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][2]);
+	wc_start_direction = wc_start_direction.Unit();
+	// angle (radians)
+	float angle_rad = lantern_start_direction.Angle(wc_start_direction);
 	// convert to degrees
 	float angle_deg = angle_rad * 180. / M_PI;
 
 	if (start_distance > 5) return false; // require WC and Lantern candidates to start within 5cm
-	if (angle_deg > 20) return false; // require WC and Lantern candidates to be within 20 degrees
+	if (angle_deg > 30) return false; // require WC and Lantern candidates to be within 30 degrees in 3D
 
 	// LArPID LLR cuts
 	float mu_pi_llr_norm = std::tanh(0.5 * (_evt.lantern_trackPiScore[_evt.lantern_pion_candidate_index] - _evt.lantern_trackMuScore[_evt.lantern_pion_candidate_index]));
@@ -277,18 +380,107 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	_evt.sel_LanternPID_llr_pr_pi_ = pr_pi_llr_norm;
 
 	// create two sidebands: near and far CC 0pi
-	if (mu_pi_llr_norm < 0.0) _evt.sel_CC0piFarSideband_= true;
-	else if (mu_pi_llr_norm > 0.0 && mu_pi_llr_norm < 0.5) _evt.sel_CC0piNearSideband_= true;
+	// calculate momentum under muon hypothesis
+	//double wc_muon_momentum = std::sqrt(std::pow(_evt.wc_reco_muonMomentum[0], 2) + 
+	//								std::pow(_evt.wc_reco_muonMomentum[1], 2) + 
+	//								std::pow(_evt.wc_reco_muonMomentum[2], 2));
+
+	// use the new variable instead (Ben)
+	double wc_muon_total_energy = _evt.wc_mcs_emu_tracklen; // in GeV
+	// convert total muon energy to momentum in Gev/c
+	const double muon_mass = 0.1056583755; // GeV/c^2
+	double wc_muon_momentum_range = (wc_muon_total_energy > muon_mass) ? std::sqrt(wc_muon_total_energy * wc_muon_total_energy - muon_mass * muon_mass) : 0.;
+
+	if (mu_pi_llr_norm < -0.5 && wc_muon_momentum_range > 0.1 && wc_muon_momentum_range < 1.4) {
+		_evt.sel_CC0piFarSideband_= true;
+	}
+	else if (mu_pi_llr_norm > -0.25 && mu_pi_llr_norm < 0.25 && wc_muon_momentum_range > 0.1 && wc_muon_momentum_range < 1.4) {
+		_evt.sel_CC0piNearSideband_= true;
+	}
+
+	if (_evt.sel_CC0piFarSideband_ || _evt.sel_CC0piNearSideband_) {
+
+		// set kinematics using WC variables and under muon hypothesis	
+		// angle
+		double start_momentum_mag = std::sqrt(std::pow(_evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][0], 2) + 
+									std::pow(_evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][1], 2) + 
+									std::pow(_evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][2], 2));
+		_evt.sel_pion_theta_= _evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][2] / start_momentum_mag;
+
+		// momentum
+		_evt.sel_pion_momentum_ = wc_muon_momentum_range;
+
+	}
 	
-	// require pion candidate to have mu/pi LLR < 0.5 (muon-like rejected)
-	if (mu_pi_llr_norm < 0.5) return false;
+	
+	// require pion candidate to have mu/pi LLR < 0.25 (muon-like rejected)
+	if (mu_pi_llr_norm < 0.25) return false;
+	
 	_evt.sel_passMuPiLLR_= true;
 
-	// set selected pion variables
+	// count the number of protons, using WC, and identify the primary proton
+	int numberProtons = 0;
+	float longest_proton_track_length = 0.0;
+	int longest_proton_track_id = -1;
+
+	for (unsigned int wc_idx = 0; wc_idx < _evt.wc_reco_Ntrack; wc_idx++) {
+
+		// skip WC pseudo-particles
+		if (_evt.wc_reco_pdg[wc_idx] == 22 || _evt.wc_reco_pdg[wc_idx] == 2112) continue; // skip pseudo-particles
+
+		// check primary
+		if (_evt.wc_reco_mother[wc_idx] != 0) continue; // require WC primary particle
+
+		// showers (electrons pdg)
+		if (_evt.wc_reco_pdg[wc_idx] == 11) {		
+			continue;
+		}
+
+		// skip pion candidate
+		if (wc_idx == _evt.wc_pion_candidate_index) continue;
+
+		// require proton
+		if (_evt.wc_reco_pdg[wc_idx] != 2212) continue;
+
+		// calculate track length
+		float wc_track_length = std::sqrt(
+		std::pow(_evt.wc_reco_startXYZT[wc_idx][0] - _evt.wc_reco_endXYZT[wc_idx][0], 2) +
+		std::pow(_evt.wc_reco_startXYZT[wc_idx][1] - _evt.wc_reco_endXYZT[wc_idx][1], 2) +
+		std::pow(_evt.wc_reco_startXYZT[wc_idx][2] - _evt.wc_reco_endXYZT[wc_idx][2], 2) );
+				
+		// check if new longest track
+		if (wc_track_length > longest_proton_track_length) {
+			longest_proton_track_length = wc_track_length;
+			longest_proton_track_id = wc_idx;
+		}
+
+		// evaluate momentum
+		double wc_proton_momentum = _evt.CalculateProtonMomentumRange(wc_track_length);
+
+		// increment proton counter if above threshold
+		if (wc_proton_momentum > 0.25) numberProtons++;	
+	}
+
+	if (numberProtons == 0) return false;
+	//if (numberProtons != 0) return false;
+
+	_evt.wc_number_proton_candidates = numberProtons;
+	_evt.wc_primary_proton_candidate_index = longest_proton_track_id;
+	_evt.wc_primary_proton_candidate_length = longest_proton_track_length;
+
+	// set selected pion variables (and proton)
     setSelectedPionInformation(_evt);
 
-	_evt.sel_NC1pi_ = true;
+	//std::cout << "Proton Momentum: " << _evt.sel_proton_momentum_ << std::endl;
 
+	// phase space requirements
+	// require pion momentum > 0.1 GeV/c
+	if (_evt.sel_pion_momentum_ <= 0.1) return false;
+	
+	// require proton momentum > 0.25 GeV/c
+	if (_evt.sel_proton_momentum_ <= 0.25) return false;
+
+	_evt.sel_NC1pi_ = true;
 	return true;
 }
 
@@ -511,6 +703,7 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 	// store candidate index
 	_evt.wc_pion_candidate_index = wc_pion_candidate_indices_classical[0];
 
+	/*
 	// LArPID selection
 	// check candidate is LARPID classified
 	if (_evt.wc_reco_larpid_classified[_evt.wc_pion_candidate_index] == 0) return false;
@@ -532,10 +725,12 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 	_evt.sel_LanternPID_llr_pr_pi_ = pr_pi_llr_norm;
 
 	// require pion candidate to have mu/pi LLR < 0.6 (muon-like rejected)
-	if (mu_pi_llr_norm < 0.825) return false;
+	//if (mu_pi_llr_norm < 0.825) return false;
+	if (mu_pi_llr_norm < 0.5) return false;
 
 	_evt.sel_passMuPiLLR_= true;
-
+	*/
+	/*
 	// require pion candidate to have pr/pi LLR < 0.5 (proton-like rejected)
 	if (pr_pi_llr_norm < 0.6) return false;
 
@@ -582,17 +777,13 @@ bool Selection::ApplyWCSelection(EventContainer &_evt, Utility::FileTypeEnums ty
 	}
 
 	if (n_mip_like_tracks > 0) return false; // veto second MIP-like track
+	*/
 
 	// calculate pion momentum for candidate track -- range
 	float wc_candidate_track_length = std::sqrt(
 		std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][0] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][0], 2) +
 		std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][1] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][1], 2) +
 		std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][2] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][2], 2) );
-
-	float pionMomentumRange = _evt.CalculatePionMomentumRange(wc_candidate_track_length);
-
-	// calculate pion momentum for candidate track -- hypfit
-	float pionMomentumHypfit = _evt.CalculatePionMomentumHypfit(_evt.wc_pion_candidate_index);
 
 	_evt.sel_NC1pi_ = true;
 
@@ -1114,8 +1305,7 @@ int Selection::CountProtons(EventContainer &_evt, Utility::RunPeriodEnums runPer
 	return numberProtons;
 }
 
-void Selection::setSelectedPionInformation(EventContainer &_evt) {
-
+void Selection::setTruthPionInformation(EventContainer &_evt) {
 	// Truth (Signal)
 	if (_evt.classification == Utility::kNC1pi) {
 
@@ -1129,12 +1319,12 @@ void Selection::setSelectedPionInformation(EventContainer &_evt) {
 											pow(_evt.mc_py_v->at(i),2) + 
 											pow(_evt.mc_pz_v->at(i),2) );
 
-			// pion
+			// pion, only one by definition
 			if ((_evt.mc_pdg_v->at(i) == 211 || _evt.mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) {
 				truth_pion_index = i;
 				truth_pion_momentum = mc_momentum;
 				break;
-			}						
+			}
 		}
 
 		// truth momentum
@@ -1143,9 +1333,44 @@ void Selection::setSelectedPionInformation(EventContainer &_evt) {
 		// truth angles
 		_evt.mc_pion_theta_ = _evt.mc_pz_v->at(truth_pion_index) / truth_pion_momentum;
 		_evt.mc_pion_phi_ = std::atan2(_evt.mc_py_v->at(truth_pion_index), _evt.mc_px_v->at(truth_pion_index));
-	}
 
-	// Reconstructed (Selected)
+
+		// find truth leading proton
+		// find true proton, matching signal thresholds (proton with momentum > 250 MeV)
+		int truth_proton_index = -1;
+		double truth_proton_momentum = -1;
+		int nProtons = 0;
+		for (int i = 0; i < _evt.mc_pdg_v->size(); i++) {
+			
+			// momentum
+			double mc_momentum = std::sqrt( pow(_evt.mc_px_v->at(i),2) + 
+											pow(_evt.mc_py_v->at(i),2) + 
+											pow(_evt.mc_pz_v->at(i),2) );
+
+			// proton
+			if ((_evt.mc_pdg_v->at(i) == 2212) && mc_momentum > 0.25) {
+				
+				nProtons++;
+
+				// update leading proton if higher momenta
+				if (mc_momentum > truth_proton_momentum) {
+					truth_proton_index = i;
+					truth_proton_momentum = mc_momentum;
+				}
+			}
+		}
+
+		// truth momentum
+		_evt.mc_proton_momentum_ = truth_proton_momentum;
+
+		// truth angles
+		_evt.mc_proton_theta_ = _evt.mc_pz_v->at(truth_proton_index) / truth_proton_momentum;
+	}
+}
+
+void Selection::setSelectedPionInformation(EventContainer &_evt) {
+
+	// Reconstructed Pion (Selected)
 	// momentum
 	// calculate pion momentum for candidate track -- hypfit, using WC track
 	_evt.pionMomentumHypfit = _evt.CalculatePionMomentumHypfit(_evt.wc_pion_candidate_index)/1000;
@@ -1155,18 +1380,74 @@ void Selection::setSelectedPionInformation(EventContainer &_evt) {
 	std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][1] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][1], 2) +
 	std::pow(_evt.wc_reco_startXYZT[_evt.wc_pion_candidate_index][2] - _evt.wc_reco_endXYZT[_evt.wc_pion_candidate_index][2], 2) );
 	_evt.pionMomentumRange = _evt.CalculatePionMomentumRange(wc_candidate_track_length);
-	
+		
 	// check whether hypfit momentum is reasonable, otherwise use range-based momentum
-	if (_utility.isNumber(_evt.pionMomentumHypfit) && _evt.pionMomentumHypfit > 0 && _evt.pionMomentumHypfit < 5) {
+	if (_utility.isNumber(_evt.pionMomentumHypfit) && _evt.pionMomentumHypfit > 0 && _evt.pionMomentumHypfit < 2) {
 		_evt.sel_pion_momentum_ = _evt.pionMomentumHypfit;
 	}
 	else _evt.sel_pion_momentum_ = _evt.pionMomentumRange;
 
+	// also store range based momentum as an alternative
+	_evt.sel_pion_momentum_range_ = _evt.pionMomentumRange;
+
 	// theta
-	_evt.sel_pion_theta_ = _evt.lantern_trackStartDirZ[_evt.lantern_pion_candidate_index];
+	// LANTERN
+	//_evt.sel_pion_theta_ = _evt.lantern_trackStartDirZ[_evt.lantern_pion_candidate_index];
+	// WC
+	double start_momentum_mag = std::sqrt(std::pow(_evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][0], 2) + 
+		std::pow(_evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][1], 2) + 
+		std::pow(_evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][2], 2));
+
+	_evt.sel_pion_theta_= _evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][2] / start_momentum_mag;
 
 	// phi
-	_evt.sel_pion_phi_ = std::atan2(_evt.lantern_trackStartDirY[_evt.lantern_pion_candidate_index], _evt.lantern_trackStartDirX[_evt.lantern_pion_candidate_index]);
+	//_evt.sel_pion_phi_ = std::atan2(_evt.lantern_trackStartDirY[_evt.lantern_pion_candidate_index], _evt.lantern_trackStartDirX[_evt.lantern_pion_candidate_index]);
+	_evt.sel_pion_phi_ = std::atan2(_evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][1], _evt.wc_reco_startMomentum[_evt.wc_pion_candidate_index][0]);
+
+	// Reconstruction proton (selected)
+	// Calculate by range, advised not to use WC variable
+	double wc_proton_momentum = _evt.CalculateProtonMomentumRange(_evt.wc_primary_proton_candidate_length);
+	
+	// angle
+	double start_momentum_mag_proton = std::sqrt(std::pow(_evt.wc_reco_startMomentum[_evt.wc_primary_proton_candidate_index][0], 2) + 
+							std::pow(_evt.wc_reco_startMomentum[_evt.wc_primary_proton_candidate_index][1], 2) + 
+							std::pow(_evt.wc_reco_startMomentum[_evt.wc_primary_proton_candidate_index][2], 2));
+	_evt.sel_proton_theta_= _evt.wc_reco_startMomentum[_evt.wc_primary_proton_candidate_index][2] / start_momentum_mag_proton;
+
+	// momentum
+	_evt.sel_proton_momentum_ = wc_proton_momentum;
     
 }
 
+void Selection::setSidebandRecoKinematics(EventContainer &_evt, int WC_Idx) {
+
+	// Reconstructed (Selected)
+	// momentum
+	// calculate pion momentum for candidate track -- hypfit, using WC track
+	_evt.pionMomentumHypfit = _evt.CalculatePionMomentumHypfit(WC_Idx)/1000;
+	// by range
+	float wc_candidate_track_length = std::sqrt(
+	std::pow(_evt.wc_reco_startXYZT[WC_Idx][0] - _evt.wc_reco_endXYZT[WC_Idx][0], 2) +
+	std::pow(_evt.wc_reco_startXYZT[WC_Idx][1] - _evt.wc_reco_endXYZT[WC_Idx][1], 2) +
+	std::pow(_evt.wc_reco_startXYZT[WC_Idx][2] - _evt.wc_reco_endXYZT[WC_Idx][2], 2) );
+	_evt.pionMomentumRange = _evt.CalculatePionMomentumRange(wc_candidate_track_length);
+	
+	// check whether hypfit momentum is reasonable, otherwise use range-based momentum
+	if (_utility.isNumber(_evt.pionMomentumHypfit) && _evt.pionMomentumHypfit > 0 && _evt.pionMomentumHypfit < 2) {
+		_evt.sel_pion_momentum_ = _evt.pionMomentumHypfit;
+	}
+	else _evt.sel_pion_momentum_ = _evt.pionMomentumRange;
+
+	// also store range based momentum as an alternative
+	_evt.sel_pion_momentum_range_ = _evt.pionMomentumRange;
+
+	// theta
+	double start_momentum_mag = std::sqrt(std::pow(_evt.wc_reco_startMomentum[WC_Idx][0], 2) + 
+		std::pow(_evt.wc_reco_startMomentum[WC_Idx][1], 2) + 
+		std::pow(_evt.wc_reco_startMomentum[WC_Idx][2], 2));
+
+	_evt.sel_pion_theta_= _evt.wc_reco_startMomentum[WC_Idx][2] / start_momentum_mag;
+
+	// phi
+	_evt.sel_pion_phi_ = std::atan2(_evt.wc_reco_startMomentum[WC_Idx][1], _evt.wc_reco_startMomentum[WC_Idx][0]);
+}

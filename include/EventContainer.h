@@ -49,6 +49,7 @@ public:
 	float GetTrackBraggPionBestPlane(unsigned int trackID);
 	float GetTrackBraggMIPBestPlane(unsigned int trackID);
   float CalculatePionMomentumRange(float R);
+  float CalculateProtonMomentumRange(float R);
   float CalculatePionMomentumHypfit(int candidateID);
   float GetShowerTrackEndProximity(unsigned int shrID);
   double GetNuMIAngle(double px, double py, double pz, std::string direction);
@@ -78,11 +79,14 @@ public:
   // CV weight, before POT scaling
   float weight_cv; 
 
-  // FSI weight histograms d
+  // FSI weight histograms 
   TH2D *h_fsi_nc_piplus;
   TH2D *h_fsi_nc_piminus;
   TH2D *h_fsi_cc_piplus;
   TH2D *h_fsi_cc_piminus;
+
+  // FSI weights generialised (Fan)
+  float hA2025reweight;
 
   // Hypfit object
   Hypfit *hypfit;
@@ -153,6 +157,8 @@ public:
   int  category_;
   int hornCurrent_;    // horn current to allow sample combination, 0 = FHC, 1 = RHC
 
+  int mc_NProtons_;
+
   bool sel_passInitialSelection_;
   bool sel_passMuPiLLR_;
   float sel_LanternPID_llr_mu_pi_;
@@ -163,15 +169,28 @@ public:
   bool sel_CC1piSideband_;
   bool sel_NCNpSideband_;
 
+  float sel_CC1piSideband_track_larpidScore_;
+  Utility::ParticleEnums sel_CC1piSideband_track_classification_;
+
   // Observables for STV tree
+  // pion
   // truth
   float mc_pion_momentum_;
   float mc_pion_theta_;
   float mc_pion_phi_;
   // reconstructed
   float sel_pion_momentum_;
+  float sel_pion_momentum_range_;
   float sel_pion_theta_;
   float sel_pion_phi_;
+
+  // proton
+  // truth
+  float mc_proton_momentum_;
+  float mc_proton_theta_;
+  // reconstructed
+  float sel_proton_momentum_;
+  float sel_proton_theta_;
 
   // -- Variables Krishan Selection -- 
   bool mc_is_inclusive_signal_;
@@ -217,32 +236,36 @@ public:
 
   // Reco particle variables
   int wc_reco_Ntrack;
-  int wc_reco_id[1000];
-  int wc_reco_pdg[1000]; // particle PDG code
-  int wc_reco_mother[1000]; // mother particle ID
-  float wc_reco_startXYZT[1000][4]; // start x, y, z, t
-  float wc_reco_endXYZT[1000][4];   // end x, y, z, t
-  float wc_reco_startMomentum[1000][4]; // reco particle start momentum (px, py, pz, E)
-  int wc_reco_larpid_classified[1000]; // classified as a particle
-  int wc_reco_larpid_pdg[1000]; // LAr PID particle PDG code 
-  float wc_reco_larpid_pidScore_el[1000]; // LAr PID score - electron
-  float wc_reco_larpid_pidScore_ph[1000]; // LAr PID score - photon
-  float wc_reco_larpid_pidScore_mu[1000]; // LAr PID score - muon
-  float wc_reco_larpid_pidScore_pi[1000]; // LAr PID score - pion
-  float wc_reco_larpid_pidScore_pr[1000]; // LAr PID score - proton
-  float wc_reco_larpid_procScore_prim[1000]; // LAr PID process score - primary
-  float wc_reco_larpid_procScore_chgd[1000]; // LAr PID process score - charged
-  float wc_reco_larpid_procScore_ntrl[1000]; // LAr PID process score - neutral
+  int wc_reco_id[2500];
+  int wc_reco_pdg[2500]; // particle PDG code
+  int wc_reco_mother[2500]; // mother particle ID
+  float wc_reco_startXYZT[2500][4]; // start x, y, z, t
+  float wc_reco_endXYZT[2500][4];   // end x, y, z, t
+  float wc_reco_startMomentum[2500][4]; // reco particle start momentum (px, py, pz, E)
+  float wc_reco_muonMomentum[4]; // reco particle momentum under muon hypothesis (px, py, pz, E) (range-based) PRIMARY ONLY
+  float wc_reco_protonMomentum[4]; // reco particle momentum under proton hypothesis (px, py, pz, E) (range-based) PRIMARY ONLY
+  int wc_reco_larpid_classified[2500]; // classified as a particle
+  int wc_reco_larpid_pdg[2500]; // LAr PID particle PDG code 
+  float wc_reco_larpid_pidScore_el[2500]; // LAr PID score - electron
+  float wc_reco_larpid_pidScore_ph[2500]; // LAr PID score - photon
+  float wc_reco_larpid_pidScore_mu[2500]; // LAr PID score - muon
+  float wc_reco_larpid_pidScore_pi[2500]; // LAr PID score - pion
+  float wc_reco_larpid_pidScore_pr[2500]; // LAr PID score - proton
+  float wc_reco_larpid_procScore_prim[2500]; // LAr PID process score - primary
+  float wc_reco_larpid_procScore_chgd[2500]; // LAr PID process score - charged
+  float wc_reco_larpid_procScore_ntrl[2500]; // LAr PID process score - neutral
   
   // truth matching
-  int wc_reco_truthMatch_pdg[1000]; // truth matched particle PDG code
-  int wc_reco_truthMatch_id[1000];  // truth matched true particle ID
+  int wc_reco_truthMatch_pdg[2500]; // truth matched particle PDG code
+  int wc_reco_truthMatch_id[2500];  // truth matched true particle ID
 
   int wc_truth_Ntrack; // number of truth particles
-  int wc_truth_id[1000]; // truth particle IDs
-  int wc_truth_pdg[1000]; // truth particle PDG code
-  int wc_truth_mother[1000]; // truth particle mother ID
-  float wc_truth_startMomentum[1000][4]; // true particle start momentum (px, py, pz, E)
+  int wc_truth_id[2500]; // truth particle IDs
+  int wc_truth_pdg[2500]; // truth particle PDG code
+  int wc_truth_mother[2500]; // truth particle mother ID
+  float wc_truth_startMomentum[2500][4]; // true particle start momentum (px, py, pz, E)
+
+  double wc_mcs_emu_tracklen;   // better muon momentum by range [London]
 
   std::vector<std::string> *wc_truth_process = nullptr;
   std::vector<std::string> *wc_truth_endprocess = nullptr;
@@ -261,15 +284,14 @@ public:
   float wc_primaryTrackVertexSeparation; // distance between WC primary track start neutrino vertex
   int wc_n_primary_particles; // number of primary particles  
 
+  int wc_number_proton_candidates;
+	int wc_primary_proton_candidate_index;
+	float wc_primary_proton_candidate_length;
+
   // daughters
   int wc_n_pion_candidate_daughters;
 	float wc_pion_candidate_daughters_total_energy;
 
-  // wc blips
-  int wc_n_blips_25cm; // number of blips within 25 cm of the candidate track
-  int wc_n_blips_50cm; // number of blips within 50 cm of the candidate track
-  int wc_n_blips_100cm; // number of blips within 100 cm of the candidate track
-  
   // lantern variables
   // truth
   int lantern_trueNuPDG;         // Neutrino PDG code
@@ -294,24 +316,24 @@ public:
   
   // tracks
   int lantern_nTracks;                    // number of reconstructed tracks
-  int lantern_trackIsSecondary[1000];      // is track secondary
-  float lantern_trackStartPosX[1000];      // track start x position
-  float lantern_trackStartPosY[1000];      // track start y position
-  float lantern_trackStartPosZ[1000];      // track start z position
-  float lantern_trackEndPosX[1000];        // track end x position
-  float lantern_trackEndPosY[1000];        // track end y position
-  float lantern_trackEndPosZ[1000];        // track end z position
-  float lantern_trackStartDirX[1000];      // track start x direction
-  float lantern_trackStartDirY[1000];      // track start y direction
-  float lantern_trackStartDirZ[1000];      // track start z direction
+  int lantern_trackIsSecondary[2500];      // is track secondary
+  float lantern_trackStartPosX[2500];      // track start x position
+  float lantern_trackStartPosY[2500];      // track start y position
+  float lantern_trackStartPosZ[2500];      // track start z position
+  float lantern_trackEndPosX[2500];        // track end x position
+  float lantern_trackEndPosY[2500];        // track end y position
+  float lantern_trackEndPosZ[2500];        // track end z position
+  float lantern_trackStartDirX[2500];      // track start x direction
+  float lantern_trackStartDirY[2500];      // track start y direction
+  float lantern_trackStartDirZ[2500];      // track start z direction
 
-  int lantern_trackClassified[1000];      // track classified by LArPID
-  int lantern_trackPID[1000];   // track classified PDG by LArPID
-  float lantern_trackMuScore[1000];    // LArPID PID score - muon
-  float lantern_trackPiScore[1000];    // LArPID PID score - pion
-  float lantern_trackPrScore[1000];    // LArPID PID score - proton
+  int lantern_trackClassified[2500];      // track classified by LArPID
+  int lantern_trackPID[2500];   // track classified PDG by LArPID
+  float lantern_trackMuScore[2500];    // LArPID PID score - muon
+  float lantern_trackPiScore[2500];    // LArPID PID score - pion
+  float lantern_trackPrScore[2500];    // LArPID PID score - proton
 
-  int lantern_trackTruePID[1000]; // true particle PDG for matched tracks
+  int lantern_trackTruePID[2500]; // true particle PDG for matched tracks
 
   int lantern_primaryTrackIndex; // WC primary track index
   float lantern_primaryTrackLength; // WC primary track length
@@ -321,7 +343,7 @@ public:
 
   // showers
   int lantern_nShowers;                  // number of reconstructed showers
-  int lantern_showerIsSecondary[1000];    // is shower secondary
+  int lantern_showerIsSecondary[2500];    // is shower secondary
 
 	// --- MC Truth ---
 	// truth interaction properties
@@ -887,21 +909,6 @@ public:
     std::vector<std::string> *mc_process_v = nullptr; // MC start process
     std::vector<std::string> *mc_end_process_v = nullptr; // MC end process
 
-    // NuGraph information
-    std::vector<float> *pfng2mipfrac = nullptr;
-    std::vector<float> *pfng2hipfrac = nullptr;
-    std::vector<float> *pfng2shrfrac = nullptr;
-    std::vector<float> *pfng2mclfrac = nullptr;
-    std::vector<float> *pfng2dfsfrac = nullptr;
-
-    // Blip information
-    int nblips_saved; 
-    std::vector<float> *blip_energy_v = nullptr; // Blip energy
-    std::vector<float> *blip_x_v = nullptr;       // Blip x
-    std::vector<float> *blip_y_v = nullptr;       // Blip y
-    std::vector<float> *blip_z_v = nullptr;       // Blip z
-    std::vector<float> *blip_proxtrkdist_v = nullptr;  // Blip track proximity distance
-    std::vector<bool>   *blip_touchtrk_v = nullptr;      // Blip touching a track
 };
 
 #endif

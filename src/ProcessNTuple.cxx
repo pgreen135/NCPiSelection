@@ -75,16 +75,16 @@ int main(int argc, char *argv[]) {
 	// Get the total POT from the subruns TTree. Save it in the output
 	// TFile as a TParameter<float>. Real data doesn't have this TTree,
 	// so check that it exists first.
-	double pot;
-	float summed_pot = 0.;
-	//bool has_pot_branch = ( subrunsTree->GetBranch("pot") != nullptr );
-	bool has_pot_branch = ( wc_POT_tree->GetBranch("pot_tor875good") != nullptr );
+	float pot = 0.;			// nuselection/SubRun "pot" is Float_t
+	double summed_pot = 0.;	// accumulate in double, ~1e20 sums lose precision in float
+	bool has_pot_branch = ( subrunsTree->GetBranch("pot") != nullptr );
+	//bool has_pot_branch = ( wc_POT_tree->GetBranch("pot_tor875good") != nullptr );
 	if ( has_pot_branch ) {
-    //subrunsTree->SetBranchAddress( "pot", &pot );
-	wc_POT_tree->SetBranchAddress( "pot_tor875good", &pot );
+    subrunsTree->SetBranchAddress( "pot", &pot );
+	//wc_POT_tree->SetBranchAddress( "pot_tor875good", &pot );
     for ( int se = 0; se < subrunsTree->GetEntries(); ++se ) {
-    	//subrunsTree->GetEntry( se );
-		wc_POT_tree->GetEntry( se );
+    	subrunsTree->GetEntry( se );
+		//wc_POT_tree->GetEntry( se );
     	summed_pot += pot;
    	}
 	std::cout << "Total POT in file: " << summed_pot << std::endl;
@@ -133,7 +133,6 @@ int main(int argc, char *argv[]) {
 		// apply selection
 		// populates necessary variables to pass to stv tree
 		bool passSelection = _selection.ApplyLanternSelection(_event, type, runPeriod);
-		//bool passSelection = _selection.ApplyWCSelection(_event, type, runPeriod);
     
 		// set the output TTree branch addresses, creating the branches if needed
 		// (during the first event loop iteration)
@@ -172,6 +171,7 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	// CV Event weights
 	set_output_branch_address( out_tree, "spline_weight", &ev.weightSpline, create, "spline_weight/F");
 	set_output_branch_address( out_tree, "tuned_cv_weight", &ev.weightTune, create, "tuned_cv_weight/F");
+	set_output_branch_address( out_tree, "hA2025_reweight", &ev.hA2025reweight, create, "hA2025_reweight/F");
 	
 	// If MC weights are available, store them in the output TTree
 	if ( ev.mc_weights_map_ ) {
@@ -209,14 +209,26 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	set_output_branch_address( out_tree, "sel_LanternPID_llr_mu_pi", &ev.sel_LanternPID_llr_mu_pi_, create, "sel_LanternPID_llr_mu_pi/F");	// Reco
 	set_output_branch_address( out_tree, "sel_LanternPID_llr_pr_pi", &ev.sel_LanternPID_llr_pr_pi_, create, "sel_LanternPID_llr_pr_pi/F");	// Reco
 
+	// Sideband LLR PID Score
+	set_output_branch_address( out_tree, "sel_CC1piSideband_track_larpidScore", &ev.sel_CC1piSideband_track_larpidScore_, create, "sel_CC1piSideband_track_larpidScore/F");	// Reco
+	set_output_branch_address( out_tree, "sel_CC1piSideband_track_classification", &ev.sel_CC1piSideband_track_classification_, create, "sel_CC1piSideband_track_classification/I");
+
 	// Pion angle and momentum
 	set_output_branch_address( out_tree, "sel_pion_theta", &ev.sel_pion_theta_, create, "sel_pion_theta/F");
 	set_output_branch_address( out_tree, "sel_pion_phi", &ev.sel_pion_phi_, create, "sel_pion_phi/F");
 	set_output_branch_address( out_tree, "sel_pion_momentum", &ev.sel_pion_momentum_, create, "sel_pion_momentum/F");
+	set_output_branch_address( out_tree, "sel_pion_momentum_range", &ev.sel_pion_momentum_range_, create, "sel_pion_momentum_range/F");
 	
 	set_output_branch_address( out_tree, "mc_pion_theta", &ev.mc_pion_theta_, create, "mc_pion_theta/F");
 	set_output_branch_address( out_tree, "mc_pion_phi", &ev.mc_pion_phi_, create, "mc_pion_phi/F");
 	set_output_branch_address( out_tree, "mc_pion_momentum", &ev.mc_pion_momentum_, create, "mc_pion_momentum/F");
+
+	// Proton angle and momentum
+	set_output_branch_address( out_tree, "sel_proton_theta", &ev.sel_proton_theta_, create, "sel_proton_theta/F");
+	set_output_branch_address( out_tree, "sel_proton_momentum", &ev.sel_proton_momentum_, create, "sel_proton_momentum/F");
+	
+	set_output_branch_address( out_tree, "mc_proton_theta", &ev.mc_proton_theta_, create, "mc_proton_theta/F");
+	set_output_branch_address( out_tree, "mc_proton_momentum", &ev.mc_proton_momentum_, create, "mc_proton_momentum/F");
 
 	// Interaction type
 	set_output_branch_address( out_tree, "mc_ccnc", &ev.ccnc, create, "mc_ccnc/I");
