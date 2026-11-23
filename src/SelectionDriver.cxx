@@ -66,7 +66,7 @@ void SelectionDriver::runBDTSelectionFull() {
 	std::vector<double> pot_weight_list = { //pot_weight_mc_run1,  //pot_weight_dirt_run1, pot_weight_beamoff_run1,
 											//pot_weight_mc_run2,  //pot_weight_dirt_run2, pot_weight_beamoff_run2,
 											//pot_weight_mc_run3,  pot_weight_dirt_run3, pot_weight_beamoff_run3,
-		                                  	//pot_weight_mc_run4, //pot_weight_dirt_run4, pot_weight_beamoff_run4,
+		                                  	//pot_weight_mc_run4, pot_weight_dirt_run4, pot_weight_beamoff_run4,
 										    pot_weight_mc_run5, //pot_weight_dirt_run5, pot_weight_beamoff_run5
 										   };
 	std::vector<Utility::FileTypeEnums> file_types_list = {//Utility::kMC, //Utility::kDirt, Utility::kEXT,
@@ -132,6 +132,8 @@ void SelectionDriver::runBDTSelectionFull() {
 	StackedHistTool _histStack_sel_proton_theta("", "", 20, -1.0, 1.0, _utility);													
 	StackedHistTool _histStack_sel_proton_momentum("", "", 40, 0, 2, _utility);
 
+	StackedHistTool _histStack_sel_pion_proton_opening_angle("", "", 20, 0, 180, _utility);
+
 	StackedHistTool _histStack_sel_sideband_larpidScore("", "", 20, -1, 1.001, _utility, "Particle");
 
 	// resolution plots
@@ -140,6 +142,10 @@ void SelectionDriver::runBDTSelectionFull() {
 
 	TH1F *pionTheta1D = new TH1F("", "", 50, -1.0, 1.0);	
 	TH2F *pionTheta2D = new TH2F("", "", 20, -1.0, 1.0, 20, -1.0, 1.0);
+
+	// pion-proton opening angle resolution plots
+	TH1F *pionProtonOpeningAngle1D = new TH1F("", "", 50, -1.0, 1.0);	
+	TH2F *pionProtonOpeningAngle2D = new TH2F("", "", 20, 0, 180, 20, 0, 180);
 
 	// dE/dx vs residual range histogram
 	TH2F *dEdx_vs_ResRange = new TH2F("", "", 100, 0, 200, 100, 0, 10);
@@ -343,8 +349,8 @@ void SelectionDriver::runBDTSelectionFull() {
 				*/
 			}
 		    
-		    //if (!passSelection) continue;
-			if (!_event.sel_CC0piFarSideband_) continue;
+		    if (!passSelection) continue;
+			//if (!_event.sel_CC0piFarSideband_) continue;
 			//if (!_event.sel_CC0piNearSideband_) continue;
 			//if (!_event.sel_CC1piSideband_) continue;
 			//if (!_event.sel_NCNpSideband_) continue;
@@ -456,6 +462,9 @@ void SelectionDriver::runBDTSelectionFull() {
 
 			// proton momentum
 			_histStack_sel_proton_momentum.Fill(_event.classification, _event.sel_proton_momentum_, pot_weight * _event.weight_cv);
+
+			// pion-proton opening angle
+			_histStack_sel_pion_proton_opening_angle.Fill(_event.classification, _event.sel_pion_proton_opening_angle_, pot_weight * _event.weight_cv);
 
 			_histStack_sel_sideband_larpidScore.Fill(_event.sel_CC1piSideband_track_classification_, _event.sel_CC1piSideband_track_larpidScore_, pot_weight * _event.weight_cv);
 			
@@ -643,6 +652,9 @@ void SelectionDriver::runBDTSelectionFull() {
 				// fill resolution plots
 				pionTheta1D->Fill((_event.sel_pion_theta_ - _event.mc_pion_theta_) / _event.mc_pion_theta_);
 				pionTheta2D->Fill(_event.mc_pion_theta_, _event.sel_pion_theta_, pot_weight * _event.weight_cv);
+
+				pionProtonOpeningAngle1D->Fill((_event.sel_pion_proton_opening_angle_ - _event.mc_pion_proton_opening_angle_) / _event.mc_pion_proton_opening_angle_);
+				pionProtonOpeningAngle2D->Fill(_event.mc_pion_proton_opening_angle_, _event.sel_pion_proton_opening_angle_, pot_weight * _event.weight_cv);
 
 				// fill binning tree
 				sel_pion_theta = _event.sel_pion_theta_;
@@ -940,6 +952,12 @@ void SelectionDriver::runBDTSelectionFull() {
   	_histStack_sel_pion_momentum_interaction.DrawStack(o3b, Utility::kTrackMomentum);
   	o3b->Print("plots/plot_pion_momentum_interaction.root"); 
 
+	// pion-proton opening angle
+	TCanvas *o3c = new TCanvas("o3c", "o3c", 1080, 1080);
+  	o3c->cd();
+  	_histStack_sel_pion_proton_opening_angle.DrawStack(o3c, Utility::kOpeningAngle);
+  	o3c->Print("plots/plot_pion_proton_opening_angle.root");
+
 	TCanvas *o4 = new TCanvas("o4", "o4", 1080, 1080);
   	o4->cd();
   	_histStack_sel_sideband_larpidScore.DrawStack(o4, Utility::kLArPID_pi);
@@ -1042,6 +1060,20 @@ void SelectionDriver::runBDTSelectionFull() {
 	pionTheta1D->GetXaxis()->SetTitle("Pion Theta ((Reco - True) / True)");
 	pionTheta1D->Draw("HIST");
   	res3a->Print("plots/plot_pion_theta_resolution_1D.root");
+
+	// pion-proton opening angle resolution 1D
+	TCanvas *res4 = new TCanvas("res4", "res4", 1080, 1080);
+	res4->cd();
+	pionProtonOpeningAngle1D->GetXaxis()->SetTitle("Pion-Proton Opening Angle ((Reco - True) / True)");
+	pionProtonOpeningAngle1D->Draw("HIST");
+  	res4->Print("plots/plot_pion_proton_opening_angle_resolution_1D.root");
+
+	TCanvas *res5 = new TCanvas("res5", "res5", 1080, 1080);
+	res5->cd();
+	pionProtonOpeningAngle2D->GetXaxis()->SetTitle("True Pion-Proton Opening Angle [deg]");
+	pionProtonOpeningAngle2D->GetYaxis()->SetTitle("Reconstructed Pion-Proton Opening Angle [deg]");
+	pionProtonOpeningAngle2D->Draw("COLZ");
+  	res5->Print("plots/plot_pion_proton_opening_angle_resolution_2D.root");
 
 }
 // ------------------------------------------------------------------------------

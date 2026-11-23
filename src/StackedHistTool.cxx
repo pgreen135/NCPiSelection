@@ -700,7 +700,7 @@ std::string StackedHistTool::PlotVariableEnum2str(Utility::PlotVariableEnums plo
     returnString = "Pion cos(#beta)";
     break;
   case Utility::kOpeningAngle:
-    returnString = "cos(#beta_{e#pi})";
+    returnString = "cos(#theta_{#pip})";
     break;
   case Utility::kNuVtxX:
     returnString = "Neutrino Vertex X [cm]";

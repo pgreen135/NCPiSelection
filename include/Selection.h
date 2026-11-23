@@ -43,7 +43,7 @@ public:
 	// Selected Pion Information
 	void setTruthPionInformation(EventContainer &_evt);
 	void setSelectedPionInformation(EventContainer &_evt);
-	void setSidebandRecoKinematics(EventContainer &_evt, int WC_Idx);
+	void setSidebandRecoKinematics(EventContainer &_evt, int WC_Idx, int Lantern_Idx);
 	
 	// ----------------------------------
 

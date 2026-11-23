@@ -106,6 +106,9 @@ EventContainer::EventContainer(TTree *pelee_tree, TTree *wc_eval_tree, TTree *wc
 	lantern_tree->SetBranchAddress("trackPiScore", &lantern_trackPiScore);
 	lantern_tree->SetBranchAddress("trackPrScore", &lantern_trackPrScore);
 
+	lantern_tree->SetBranchAddress("trackRecoE", &lantern_trackRecoE);
+	
+
 	lantern_tree->SetBranchAddress("trackTruePID", &lantern_trackTruePID);
 
 	lantern_tree->SetBranchAddress("nShowers", &lantern_nShowers);
@@ -1613,6 +1616,10 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
     lantern_primaryTrackVertexSeparation = 0.0;
   	lantern_pion_candidate_index = -1;
 
+	lantern_number_proton_candidates = -1;
+	lantern_primary_proton_candidate_index = -1;
+	lantern_primary_proton_candidate_length = 0;
+
 	truePionHasMuon = false;
 	truePionHasPi0 = false;
 	truePionNProtons = 0;
@@ -1632,6 +1639,9 @@ void EventContainer::populateDerivedVariables(Utility::FileTypeEnums type, Utili
 	mc_proton_momentum_ = -9999;
 	sel_proton_theta_ = -9999;
 	sel_proton_momentum_ = -9999;
+
+	mc_pion_proton_opening_angle_ = -9999;
+	sel_pion_proton_opening_angle_ = -9999;
 
 	sel_CC1piSideband_track_larpidScore_ = -9999;
     sel_CC1piSideband_track_classification_ = Utility::kCosmic;

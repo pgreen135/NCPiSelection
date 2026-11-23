@@ -192,6 +192,10 @@ public:
   float sel_proton_momentum_;
   float sel_proton_theta_;
 
+  // pion--proton opening angle
+  float mc_pion_proton_opening_angle_;
+  float sel_pion_proton_opening_angle_;
+
   // -- Variables Krishan Selection -- 
   bool mc_is_inclusive_signal_;
   bool sel_passInclusiveSelection_;
@@ -288,6 +292,10 @@ public:
 	int wc_primary_proton_candidate_index;
 	float wc_primary_proton_candidate_length;
 
+  int lantern_number_proton_candidates;
+	int lantern_primary_proton_candidate_index;
+	float lantern_primary_proton_candidate_length;
+
   // daughters
   int wc_n_pion_candidate_daughters;
 	float wc_pion_candidate_daughters_total_energy;
@@ -334,6 +342,8 @@ public:
   float lantern_trackPrScore[2500];    // LArPID PID score - proton
 
   int lantern_trackTruePID[2500]; // true particle PDG for matched tracks
+
+  float lantern_trackRecoE[2500]; // track reconstructed energy, kinetic energy in MeV
 
   int lantern_primaryTrackIndex; // WC primary track index
   float lantern_primaryTrackLength; // WC primary track length

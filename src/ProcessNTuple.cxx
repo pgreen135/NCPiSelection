@@ -230,6 +230,10 @@ void set_event_output_branch_addresses(TTree& out_tree, EventContainer& ev, bool
 	set_output_branch_address( out_tree, "mc_proton_theta", &ev.mc_proton_theta_, create, "mc_proton_theta/F");
 	set_output_branch_address( out_tree, "mc_proton_momentum", &ev.mc_proton_momentum_, create, "mc_proton_momentum/F");
 
+	// Pion-proton opening angle
+	set_output_branch_address( out_tree, "sel_pion_proton_opening_angle", &ev.sel_pion_proton_opening_angle_, create, "sel_pion_proton_opening_angle/F");
+	set_output_branch_address( out_tree, "mc_pion_proton_opening_angle", &ev.mc_pion_proton_opening_angle_, create, "mc_pion_proton_opening_angle/F");
+
 	// Interaction type
 	set_output_branch_address( out_tree, "mc_ccnc", &ev.ccnc, create, "mc_ccnc/I");
 	set_output_branch_address( out_tree, "mc_interaction", &ev.interaction, create, "mc_interaction/I");
