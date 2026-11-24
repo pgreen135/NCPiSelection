@@ -50,6 +50,7 @@ public:
 	float GetTrackBraggMIPBestPlane(unsigned int trackID);
   float CalculatePionMomentumRange(float R);
   float CalculateProtonMomentumRange(float R);
+  float CalculateMuonMomentumRange(float R);
   float CalculatePionMomentumHypfit(int candidateID);
   float GetShowerTrackEndProximity(unsigned int shrID);
   double GetNuMIAngle(double px, double py, double pz, std::string direction);

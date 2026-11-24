@@ -1892,6 +1892,19 @@ float EventContainer::CalculateProtonMomentumRange(float R) {
 
 }
 
+// muon momentum range-based, using PhysdEdx spline
+float EventContainer::CalculateMuonMomentumRange(float R) {
+
+	if (R <= 0) return 0;
+
+	const double muon_mass = 105.6583755; // MeV
+	double KE = hypfit->map_PhysdEdx[13]->KEFromRangeSpline(R); // MeV
+	if (KE <= 0) return 0;
+
+	return std::sqrt(KE * KE + 2 * KE * muon_mass) / 1000; // GeV/c
+
+}
+
 float EventContainer::CalculatePionMomentumHypfit(int candidateID) {
 
 	// get candidate track ID
