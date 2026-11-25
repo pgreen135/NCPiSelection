@@ -428,7 +428,7 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	if (mu_pi_llr_norm < -0.5 && wc_muon_momentum_range > 0.1 && wc_muon_momentum_range < 1.4) {
 		_evt.sel_CC0piFarSideband_= true;
 	}
-	else if (mu_pi_llr_norm > -0.25 && mu_pi_llr_norm < 0.25 && wc_muon_momentum_range > 0.1 && wc_muon_momentum_range < 1.4) {
+	else if (mu_pi_llr_norm > 0.0 && mu_pi_llr_norm < 0.25 && wc_muon_momentum_range > 0.1 && wc_muon_momentum_range < 1.4) {
 		_evt.sel_CC0piNearSideband_= true;
 	}
 
@@ -497,7 +497,7 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 		double wc_proton_momentum = _evt.CalculateProtonMomentumRange(wc_track_length);
 
 		// increment proton counter if above threshold
-		if (wc_proton_momentum > 0.25) numberProtons++;	
+		if (wc_proton_momentum > 0.30) numberProtons++;	
 	}
 
 	// count the number of protons, using LANTERN, and identify the primary proton
@@ -541,7 +541,7 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 			//std::cout << "Lantern Proton Momentum: " << lantern_proton_momentum << ", Track Length = " << track_length << std::endl;
 
 			// increment proton counter if above threshold
-			if (lantern_proton_momentum > 0.25) {
+			if (lantern_proton_momentum > 0.30) {
 				//std::cout << "Lantern Proton seletected: " << lantern_proton_momentum << std::endl;
 				numberProtons_lantern++;	
 			}
@@ -570,8 +570,8 @@ bool Selection::ApplyLanternSelection(EventContainer &_evt, Utility::FileTypeEnu
 	// require pion momentum > 0.1 GeV/c
 	if (_evt.sel_pion_momentum_ <= 0.1) return false;
 	
-	// require proton momentum > 0.25 GeV/c
-	if (_evt.sel_proton_momentum_ <= 0.25) return false;
+	// require proton momentum > 0.30 GeV/c
+	if (_evt.sel_proton_momentum_ <= 0.30) return false;
 
 	_evt.sel_NC1pi_ = true;
 	return true;
@@ -1429,7 +1429,7 @@ void Selection::setTruthPionInformation(EventContainer &_evt) {
 
 
 		// find truth leading proton
-		// find true proton, matching signal thresholds (proton with momentum > 250 MeV)
+		// find true proton, matching signal thresholds (proton with momentum > 300 MeV)
 		int truth_proton_index = -1;
 		double truth_proton_momentum = -1;
 		int nProtons = 0;
@@ -1441,7 +1441,7 @@ void Selection::setTruthPionInformation(EventContainer &_evt) {
 											pow(_evt.mc_pz_v->at(i),2) );
 
 			// proton
-			if ((_evt.mc_pdg_v->at(i) == 2212) && mc_momentum > 0.25) {
+			if ((_evt.mc_pdg_v->at(i) == 2212) && mc_momentum > 0.30) {
 				
 				nProtons++;
 

@@ -61,13 +61,13 @@ void SelectionDriver::runBDTSelectionFull() {
 											  //filename_mc_run2, //filename_dirt_run2, filename_beamoff_run2,
 											  //filename_mc_run3, //filename_dirt_run3, filename_beamoff_run3,
 											  //filename_mc_run4, //filename_dirt_run4, filename_beamoff_run4,
-											  filename_mc_run5, //filename_dirt_run5, filename_beamoff_run5
+											  filename_mc_run5, filename_dirt_run5, filename_beamoff_run5
 											  };
 	std::vector<double> pot_weight_list = { //pot_weight_mc_run1,  //pot_weight_dirt_run1, pot_weight_beamoff_run1,
 											//pot_weight_mc_run2,  //pot_weight_dirt_run2, pot_weight_beamoff_run2,
 											//pot_weight_mc_run3,  pot_weight_dirt_run3, pot_weight_beamoff_run3,
 		                                  	//pot_weight_mc_run4, pot_weight_dirt_run4, pot_weight_beamoff_run4,
-										    pot_weight_mc_run5, //pot_weight_dirt_run5, pot_weight_beamoff_run5
+										    pot_weight_mc_run5, pot_weight_dirt_run5, pot_weight_beamoff_run5
 										   };
 	std::vector<Utility::FileTypeEnums> file_types_list = {//Utility::kMC, //Utility::kDirt, Utility::kEXT,
 		 												   //Utility::kMC, //Utility::kDirt, Utility::kEXT,

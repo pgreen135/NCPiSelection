@@ -531,7 +531,7 @@ void EventContainer::EventClassifier(Utility::FileTypeEnums type){
 													pow(mc_pz_v->at(i),2) );
 
 					if ((mc_pdg_v->at(i) == 211 || mc_pdg_v->at(i) == -211) && mc_momentum > 0.1) npion_threshold++; // 100 MeV/c threshold					
-					if ((mc_pdg_v->at(i) == 2212) && mc_momentum > 0.25) nproton_threshold++; // 250 MeV/c threshold
+					if ((mc_pdg_v->at(i) == 2212) && mc_momentum > 0.30) nproton_threshold++; // 300 MeV/c threshold
 					if ((mc_pdg_v->at(i) == 321 || mc_pdg_v->at(i) == -321 || mc_pdg_v->at(i) == 311)) nkaon++;
 					if ((mc_pdg_v->at(i) == 213 || mc_pdg_v->at(i) == -213 || mc_pdg_v->at(i) == 113)) nrho++;
 					if (mc_pdg_v->at(i) == 223) nomega++;
